@@ -1,5 +1,9 @@
 import { IRenderMime } from '@jupyterlab/rendermime-interfaces';
 
+import { KernelManager } from '@jupyterlab/services';
+
+import { IMimeBundle } from '@jupyterlab/nbformat';
+
 import { Widget } from '@lumino/widgets';
 
 /**
@@ -30,7 +34,21 @@ export class OutputWidget extends Widget implements IRenderMime.IRenderer {
    */
   renderModel(model: IRenderMime.IMimeModel): Promise<void> {
     const data = model.data[this._mimeType] as string;
-    this.node.textContent = data.slice(0, 16384);
+    this.node.innerHTML = data; //.replace(/(?:\r\n|\r|\n)/g, '<br>');
+
+    let code_content = "'<br> <b>TEST TEST TEST TEST</b>'";
+
+    let manager = new KernelManager();
+    manager.startNew({name: 'python'}).then(connection => {
+      let future = connection.requestExecute({ code: code_content } );
+      future.onIOPub = (msg) => {
+        console.log(msg.content);
+              if (msg.header.msg_type == "execute_result" && 'data' in msg.content) {
+                  let result = msg.content.data as IMimeBundle;
+                  this.node.innerHTML += result['text/plain'];
+              }
+          };
+    }).catch(err => alert(err));
     return Promise.resolve();
   }
 
