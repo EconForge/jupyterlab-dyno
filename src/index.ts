@@ -38,8 +38,8 @@ export class OutputWidget extends Widget implements IRenderMime.IRenderer {
     let start = performance.now();
     this.node.style.setProperty("overflow", "auto");
     const data = model.data[this._mimeType] as string;
-    // let code_content = `from dyno.modfile import Modfile\nm=Modfile(txt='''${data}''')\nm.solve()`;
-    let code_content = `from time import time\nt0 = time()\nfrom dyno.modfile import Modfile\nt1 = time()\nm=Modfile(txt='''${data}''')\nt2 = time()\ns=m.solve()\nt3 = time()\nhtml = s._repr_html_()\nt4 = time()\nprint(f'Module import: {(t1-t0)*1000} ms\\nModel construction: {(t2-t1)*1000} ms\\nModel solving: {(t3-t2)*1000} ms\\nConversion to html: {(t4-t3)*1000} ms\\n->Python total: {(t4-t0)*1000} ms')\nhtml`;
+    let code_content = `from dyno.modfile import Modfile\nm=Modfile(txt='''${data}''')\nm.solve()`;
+    // let code_content = `from time import time\nt0 = time()\nfrom dyno.modfile import Modfile\nt1 = time()\nm=Modfile(txt='''${data}''')\nt2 = time()\ns=m.solve()\nt3 = time()\nhtml = s._repr_html_()\nt4 = time()\nprint(f'Module import: {(t1-t0)*1000} ms\\nModel construction: {(t2-t1)*1000} ms\\nModel solving: {(t3-t2)*1000} ms\\nConversion to html: {(t4-t3)*1000} ms\\n->Python total: {(t4-t0)*1000} ms')\nhtml`;
     this.connection.then(conn => {
       let future = conn.requestExecute({ code: code_content } );
       future.onIOPub = (msg) => {
