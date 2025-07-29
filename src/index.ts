@@ -1,6 +1,6 @@
 import { IRenderMime } from '@jupyterlab/rendermime-interfaces';
 
-import { KernelManager } from '@jupyterlab/services';
+import { KernelManager, Kernel } from '@jupyterlab/services';
 
 import { IMimeBundle } from '@jupyterlab/nbformat';
 
@@ -27,31 +27,43 @@ export class OutputWidget extends Widget implements IRenderMime.IRenderer {
     super();
     this._mimeType = options.mimeType;
     this.addClass(CLASS_NAME);
+    let manager = new KernelManager();
+    this.connection = manager.startNew({name: 'prod'});
   }
 
   /**
    * Render mod into this widget's node.
    */
   renderModel(model: IRenderMime.IMimeModel): Promise<void> {
+    let start = performance.now();
+    this.node.style.setProperty("overflow", "auto");
     const data = model.data[this._mimeType] as string;
-    this.node.innerHTML = data; //.replace(/(?:\r\n|\r|\n)/g, '<br>');
-
-    let code_content = "'<br> <b>TEST TEST TEST TEST</b>'";
-
-    let manager = new KernelManager();
-    manager.startNew({name: 'python'}).then(connection => {
-      let future = connection.requestExecute({ code: code_content } );
+    // let code_content = `from dyno.modfile import Modfile\nm=Modfile(txt='''${data}''')\nm.solve()`;
+    let code_content = `from time import time\nt0 = time()\nfrom dyno.modfile import Modfile\nt1 = time()\nm=Modfile(txt='''${data}''')\nt2 = time()\ns=m.solve()\nt3 = time()\nhtml = s._repr_html_()\nt4 = time()\nprint(f'Module import: {(t1-t0)*1000} ms\\nModel construction: {(t2-t1)*1000} ms\\nModel solving: {(t3-t2)*1000} ms\\nConversion to html: {(t4-t3)*1000} ms\\n->Python total: {(t4-t0)*1000} ms')\nhtml`;
+    this.connection.then(conn => {
+      let future = conn.requestExecute({ code: code_content } );
       future.onIOPub = (msg) => {
-        console.log(msg.content);
+              let end = performance.now();
+              // console.log(msg);
               if (msg.header.msg_type == "execute_result" && 'data' in msg.content) {
                   let result = msg.content.data as IMimeBundle;
-                  this.node.innerHTML += result['text/plain'];
+                  this.node.innerHTML = result['text/html'] as string;
+                  console.log(`Took ${end-start} milliseconds to render mod file`);
+                }
+              else if(msg.header.msg_type == "error" && 'ename' in msg.content && 'evalue' in msg.content){
+                this.node.innerHTML = `Failed to solve mod file due to ${msg.content.ename} <br> ${msg.content.evalue}`;
+                console.log(`Took ${end-start} milliseconds to show error message`);
               }
+              else if(msg.header.msg_type == "stream" && 'text' in msg.content){
+                console.log(msg.content.text);
+              }
+              
           };
-    }).catch(err => alert(err));
+      }
+    );
     return Promise.resolve();
   }
-
+  private connection: Promise<Kernel.IKernelConnection>;
   private _mimeType: string;
 }
 
