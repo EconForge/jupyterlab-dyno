@@ -55,7 +55,8 @@ export class OutputWidget extends Widget implements IRenderMime.IRenderer {
           'ename' in msg.content &&
           'evalue' in msg.content
         ) {
-          this.node.innerHTML = `Failed to solve mod file due to ${msg.content.ename} <br> ${msg.content.evalue}`;
+          this.node.innerHTML = `<div class="output_stderr"><span class="ansi-red-intense-fg">Failed to solve mod file </span>
+          <br> <span class="ansi-red-intense-fg"> ${msg.content.ename}: </span> ${msg.content.evalue} </div>`;
           console.log(`Took ${end - start} milliseconds to show error message`);
         } else if (msg.header.msg_type == 'stream' && 'text' in msg.content) {
           console.log(msg.content.text);
