@@ -1,18 +1,14 @@
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
 _commit: v4.3.8
 _src_path: https://github.com/jupyterlab/extension-template
-author_email: ousema.bouaneni@quantstack.net
-author_name: Ousema
-data_format: string
-file_extension: .mod
-has_binder: false
-kind: mimerenderer
-labextension_name: jupyter_dynare
-mimetype: text/mod
-mimetype_name: mod
-project_short_description: A JupyterLab extension.
+author_email: ousema.bouaneni@polytechnique.edu
+author_name: Ousema Bouaneni
+has_binder: true
+has_settings: false
+kind: frontend
+labextension_name: jupyter-dynare
+project_short_description: A Jupyter extension for Dynare .mod files
 python_name: jupyter_dynare
 repository: ''
-test: false
-viewer_name: Dynare viewer
+test: true
 

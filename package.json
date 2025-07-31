@@ -1,17 +1,20 @@
 {
-    "name": "jupyter_dynare",
+    "name": "jupyter-dynare",
     "version": "0.1.0",
-    "description": "A JupyterLab extension.",
+    "description": "A Jupyter extension for Dynare .mod files",
     "keywords": [
         "jupyter",
         "jupyterlab",
         "jupyterlab-extension"
     ],
     "homepage": "",
+    "bugs": {
+        "url": "https://github.com/ousema-bouaneni/jupyter_dynare/issues"
+    },
     "license": "BSD-3-Clause",
     "author": {
-        "name": "Ousema",
-        "email": "ousema.bouaneni@quantstack.net"
+        "name": "Ousema Bouaneni",
+        "email": "ousema.bouaneni@polytechnique.edu"
     },
     "files": [
         "lib/**/*.{d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
@@ -47,35 +50,36 @@
         "prettier:check": "jlpm prettier:base --check",
         "stylelint": "jlpm stylelint:check --fix",
         "stylelint:check": "stylelint --cache \"style/**/*.css\"",
+        "test": "jest --coverage",
         "watch": "run-p watch:src watch:labextension",
         "watch:src": "tsc -w --sourceMap",
         "watch:labextension": "jupyter labextension watch ."
     },
     "dependencies": {
-        "@jupyterlab/rendermime-interfaces": "^3.12.5",
-        "@jupyterlab/services": "^7.4.5",
-        "@jupyterlab/nbformat": "^4.4.5",
-        "@lumino/widgets": "^2.7.1"
+        "@jupyterlab/application": "^4.4.5"
     },
     "devDependencies": {
         "@jupyterlab/builder": "^4.4.5",
+        "@jupyterlab/testutils": "^4.4.5",
+        "@types/jest": "^30.0.0",
         "@types/json-schema": "^7.0.15",
-        "@types/react": "^19.1.8",
+        "@types/react": "^19.1.9",
         "@types/react-addons-linked-state-mixin": "^0.14.27",
         "@typescript-eslint/eslint-plugin": "^8.38.0",
         "@typescript-eslint/parser": "^8.38.0",
         "css-loader": "^7.1.2",
-        "eslint": "^9.31.0",
+        "eslint": "^9.32.0",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-prettier": "^5.5.3",
+        "jest": "^30.0.5",
         "npm-run-all2": "^8.0.4",
         "prettier": "^3.6.2",
         "rimraf": "^6.0.1",
         "source-map-loader": "^5.0.0",
         "style-loader": "^4.0.0",
-        "stylelint": "^16.22.0",
-        "stylelint-config-recommended": "^16.0.0",
-        "stylelint-config-standard": "^38.0.0",
+        "stylelint": "^16.23.0",
+        "stylelint-config-recommended": "^17.0.0",
+        "stylelint-config-standard": "^39.0.0",
         "stylelint-csstree-validator": "^3.0.0",
         "stylelint-prettier": "^5.0.3",
         "typescript": "~5.8.3",
@@ -90,14 +94,23 @@
         "access": "public"
     },
     "jupyterlab": {
-        "mimeExtension": true,
-        "outputDir": "jupyter_dynare/labextension"
+        "extension": true,
+        "outputDir": "jupyter_dynare/labextension",
+        "sharedPackages": {
+            "@jupyterlab/ui-components": {
+                "bundled": false,
+                "singleton": true
+            }
+        }
     },
     "eslintIgnore": [
         "node_modules",
         "dist",
         "coverage",
-        "**/*.d.ts"
+        "**/*.d.ts",
+        "tests",
+        "**/__tests__",
+        "ui-tests"
     ],
     "eslintConfig": {
         "extends": [
