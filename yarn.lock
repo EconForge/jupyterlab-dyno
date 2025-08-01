@@ -2348,6 +2348,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jupyterlab/launcher@npm:^4.4.5":
+  version: 4.4.5
+  resolution: "@jupyterlab/launcher@npm:4.4.5"
+  dependencies:
+    "@jupyterlab/apputils": ^4.5.5
+    "@jupyterlab/translation": ^4.4.5
+    "@jupyterlab/ui-components": ^4.4.5
+    "@lumino/algorithm": ^2.0.3
+    "@lumino/commands": ^2.3.2
+    "@lumino/coreutils": ^2.2.1
+    "@lumino/disposable": ^2.1.4
+    "@lumino/properties": ^2.0.3
+    "@lumino/widgets": ^2.7.1
+    react: ^18.2.0
+  checksum: 10a4cda61174be7e08dd1bdb817f9e71e76a8c7a49a28c576b86c5f97ef48fcc1f3d22b0f68d3b2c34502db7517fe548bc6c9790c1605309ab29fccdfb57c496
+  languageName: node
+  linkType: hard
+
 "@jupyterlab/lsp@npm:^4.4.5":
   version: 4.4.5
   resolution: "@jupyterlab/lsp@npm:4.4.5"
@@ -2368,6 +2386,21 @@ __metadata:
     vscode-languageserver-protocol: ^3.17.0
     vscode-ws-jsonrpc: ~1.0.2
   checksum: 4510ae6fdf327d1b26290d6009b622174016130865150d23556e0eb539f6b6c96feeb571cf0aaf13a08f480a78942a539b0a2f898fe144518c34fa813dc9abeb
+  languageName: node
+  linkType: hard
+
+"@jupyterlab/mainmenu@npm:^4.4.5":
+  version: 4.4.5
+  resolution: "@jupyterlab/mainmenu@npm:4.4.5"
+  dependencies:
+    "@jupyterlab/apputils": ^4.5.5
+    "@jupyterlab/translation": ^4.4.5
+    "@jupyterlab/ui-components": ^4.4.5
+    "@lumino/algorithm": ^2.0.3
+    "@lumino/commands": ^2.3.2
+    "@lumino/coreutils": ^2.2.1
+    "@lumino/widgets": ^2.7.1
+  checksum: f0761f3c9eccf7b5088993b16b5c3a95b109560983e4488aa63b5513ff36685c0459e8369e12cd9d4ee822795bd9920f2743aa535e6daf47164e7737b7bf959e
   languageName: node
   linkType: hard
 
@@ -6830,6 +6863,8 @@ __metadata:
   dependencies:
     "@jupyterlab/application": ^4.4.5
     "@jupyterlab/builder": ^4.4.5
+    "@jupyterlab/launcher": ^4.4.5
+    "@jupyterlab/mainmenu": ^4.4.5
     "@jupyterlab/testutils": ^4.4.5
     "@types/jest": ^29.5.14
     "@types/json-schema": ^7.0.15
