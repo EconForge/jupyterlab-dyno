@@ -2,8 +2,15 @@ import {
   ABCWidgetFactory,
   DocumentRegistry,
   DocumentWidget,
-  DocumentModel
+  DocumentModel,
+  IDocumentWidget
 } from '@jupyterlab/docregistry';
+
+import { ActivityMonitor } from '@jupyterlab/coreutils';
+
+import { Kernel, KernelManager } from '@jupyterlab/services';
+
+import { IMimeBundle } from '@jupyterlab/nbformat';
 
 import { IWidgetTracker, WidgetTracker } from '@jupyterlab/apputils';
 
@@ -14,10 +21,6 @@ import { IDefaultFileBrowser } from '@jupyterlab/filebrowser';
 import { Widget } from '@lumino/widgets';
 import { Token } from '@lumino/coreutils';
 
-import { KernelManager, Kernel } from '@jupyterlab/services';
-
-import { IMimeBundle } from '@jupyterlab/nbformat';
-
 // import { DocumentManager } from '@jupyterlab/docmanager';
 
 import {
@@ -25,6 +28,8 @@ import {
   JupyterFrontEndPlugin,
   ILayoutRestorer
 } from '@jupyterlab/application';
+
+// import { Message } from '@lumino/messaging';
 
 /**
  * The default mime type for the extension.
@@ -37,34 +42,56 @@ const MIME_TYPE = 'text/mod';
 const CLASS_NAME = 'dynare-extension';
 
 /**
- * A widget for rendering mod file solutions.
+ * Timeout between modification and render in milliseconds
  */
-export class SolutionWidget extends Widget {
-  /**
-   * Construct a new solution widget.
-   */
-  constructor(context: DocumentRegistry.IContext<DocumentModel>) {
-    super();
+const RENDER_TIMEOUT = 10;
+
+/**
+ * DynareWidget: widget that represents the solution of a mod file
+ */
+export class DynareWidget
+  extends DocumentWidget<Widget, DocumentModel>
+  implements IDocumentWidget<Widget, DocumentModel>
+{
+  constructor(options: DocumentWidget.IOptions<Widget, DocumentModel>) {
+    super(options);
     this.addClass(CLASS_NAME);
     const manager = new KernelManager();
-    this.connection = manager.startNew({ name: 'prod' });
-    // const docmanager = new DocumentManager({});
-    const data = context.model;
-    console.log(data);
-    this.renderSolution(data.toString());
+    this._connection = manager.startNew({ name: 'prod' });
+    this._connection.then(conn => {
+      conn.requestExecute({ code: 'from dyno.modfile import Modfile' });
+    });
+    void this.context.ready.then(() => {
+      console.log('update called from ctor');
+      this.update();
+      this._monitor = new ActivityMonitor({
+        signal: this.context.model.contentChanged,
+        timeout: RENDER_TIMEOUT
+      });
+      this._monitor.activityStopped.connect(this.update, this);
+    });
   }
 
-  /**
-   * Render mod file into this widget's node.
+  protected onUpdateRequest(): void {
+    if (this._renderPending) {
+      return;
+    }
+    this._renderPending = true;
+    void this._renderModel().then(() => (this._renderPending = false));
+  }
+
+  /*
+   * Puts solution or error into widget's node
    */
-  renderSolution(data: string): Promise<void> {
-    console.log('renderSolution was called');
+  private async _renderModel(): Promise<void> {
+    const data = this.context.model.toString();
+    if (data === '') {
+      return; // don't try to render empty documents
+    }
     const start = performance.now();
-    this.node.style.setProperty('overflow', 'auto');
-    this.addClass('rendered_html');
-    const code_content = `from dyno.modfile import Modfile\nm=Modfile(txt='''${data}''')\nm.solve()`;
+    const code_content = `m=Modfile(txt='''${data}''')\nm.solve()`;
     // let code_content = `from time import time\nt0 = time()\nfrom dyno.modfile import Modfile\nt1 = time()\nm=Modfile(txt='''${data}''')\nt2 = time()\ns=m.solve()\nt3 = time()\nhtml = s._repr_html_()\nt4 = time()\nprint(f'Module import: {(t1-t0)*1000} ms\\nModel construction: {(t2-t1)*1000} ms\\nModel solving: {(t3-t2)*1000} ms\\nConversion to html: {(t4-t3)*1000} ms\\n->Python total: {(t4-t0)*1000} ms')\nhtml`;
-    this.connection.then(conn => {
+    this._connection.then(conn => {
       const future = conn.requestExecute({ code: code_content });
       future.onIOPub = msg => {
         const end = performance.now();
@@ -86,20 +113,6 @@ export class SolutionWidget extends Widget {
         }
       };
     });
-    return Promise.resolve();
-  }
-  private connection: Promise<Kernel.IKernelConnection>;
-}
-
-/**
- * DynareWidget: widget that represents the view for a mod file
- */
-export class DynareWidget extends DocumentWidget<
-  SolutionWidget,
-  DocumentModel
-> {
-  constructor(options: DocumentWidget.IOptions<SolutionWidget, DocumentModel>) {
-    super(options);
   }
 
   // Dispose of resources held by the widget
@@ -107,6 +120,10 @@ export class DynareWidget extends DocumentWidget<
     this.content.dispose();
     super.dispose();
   }
+  private _renderPending = false;
+  private _connection: Promise<Kernel.IKernelConnection>;
+  private _monitor: ActivityMonitor<DocumentRegistry.IModel, void> | null =
+    null;
 }
 
 /**
@@ -128,7 +145,7 @@ export class DynareWidgetFactory extends ABCWidgetFactory<
   ): DynareWidget {
     return new DynareWidget({
       context,
-      content: new SolutionWidget(context)
+      content: new Widget()
     });
   }
 }
