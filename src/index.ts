@@ -14,11 +14,8 @@ import { IMimeBundle } from '@jupyterlab/nbformat';
 
 import { IWidgetTracker, WidgetTracker } from '@jupyterlab/apputils';
 
-import { ILauncher } from '@jupyterlab/launcher';
-
-import { IDefaultFileBrowser } from '@jupyterlab/filebrowser';
-
 import { Widget } from '@lumino/widgets';
+
 import { Token } from '@lumino/coreutils';
 
 // import { DocumentManager } from '@jupyterlab/docmanager';
@@ -165,13 +162,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
   id: 'jupyter-dynare:plugin',
   description: 'A JupyterLab extension for solving Dynare models',
   autoStart: true,
-  requires: [ILayoutRestorer, IDefaultFileBrowser, ILauncher],
-  activate: (
-    app: JupyterFrontEnd,
-    restorer: ILayoutRestorer,
-    browserFactory: IDefaultFileBrowser,
-    launcher: ILauncher
-  ) => {
+  requires: [ILayoutRestorer],
+  activate: (app: JupyterFrontEnd, restorer: ILayoutRestorer) => {
     console.log('JupyterLab extension jupyter-dynare is activated!');
     const { commands, shell } = app;
     // Tracker
@@ -257,45 +249,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
       contentType: 'file',
       mimeTypes: [MIME_TYPE]
     });
-    // Add command for creating new mod file
-    commands.addCommand('mod:create-new', {
-      label: 'Create new mod file',
-      caption: 'Create a new mod file',
-      execute: () => {
-        const cwd = browserFactory.model.path;
-        commands
-          .execute('docmanager:new-untitled', {
-            path: cwd,
-            type: 'file',
-            ext: '.mod'
-          })
-          .then(model =>
-            commands.execute('docmanager:open', {
-              path: model.path,
-              factory: FACTORY
-            })
-          );
-      }
-    });
-
-    const CREATE_NEW_CMD = 'mod:create-new';
-
-    // Add launcher item if launcher is available
-    if (launcher) {
-      launcher.add({
-        command: CREATE_NEW_CMD,
-        category: 'Other',
-        rank: 20
-      });
-    }
-
-    // // Add palette item if palette is available
-    // if (palette) {
-    //   palette.addItem({
-    //     command: CREATE_NEW_CMD,
-    //     category: FACTORY
-    //   });
-    // }
   }
 };
 
