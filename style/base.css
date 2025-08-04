@@ -2,145 +2,146 @@
     Excerpt from https://cdn.jupyter.org/notebook/5.1.0/style/style.min.css
 */
 
-.rendered_html {
+.dynare-extension {
   color: #000;
+  overflow: auto;
   /* any extras will just be numbers: */
 }
-.rendered_html em {
+.dynare-extension em {
   font-style: italic;
 }
-.rendered_html strong {
+.dynare-extension strong {
   font-weight: bold;
 }
-.rendered_html u {
+.dynare-extension u {
   text-decoration: underline;
 }
-.rendered_html :link {
+.dynare-extension :link {
   text-decoration: underline;
 }
-.rendered_html :visited {
+.dynare-extension :visited {
   text-decoration: underline;
 }
-.rendered_html h1 {
+.dynare-extension h1 {
   font-size: 185.7%;
   margin: 1.08em 0 0 0;
   font-weight: bold;
-  line-height: 1.0;
+  line-height: 1;
 }
-.rendered_html h2 {
+.dynare-extension h2 {
   font-size: 157.1%;
   margin: 1.27em 0 0 0;
   font-weight: bold;
-  line-height: 1.0;
+  line-height: 1;
 }
-.rendered_html h3 {
+.dynare-extension h3 {
   font-size: 128.6%;
   margin: 1.55em 0 0 0;
   font-weight: bold;
-  line-height: 1.0;
+  line-height: 1;
 }
-.rendered_html h4 {
+.dynare-extension h4 {
   font-size: 100%;
   margin: 2em 0 0 0;
   font-weight: bold;
-  line-height: 1.0;
+  line-height: 1;
 }
-.rendered_html h5 {
+.dynare-extension h5 {
   font-size: 100%;
   margin: 2em 0 0 0;
   font-weight: bold;
-  line-height: 1.0;
+  line-height: 1;
   font-style: italic;
 }
-.rendered_html h6 {
+.dynare-extension h6 {
   font-size: 100%;
   margin: 2em 0 0 0;
   font-weight: bold;
-  line-height: 1.0;
+  line-height: 1;
   font-style: italic;
 }
-.rendered_html h1:first-child {
+.dynare-extension h1:first-child {
   margin-top: 0.538em;
 }
-.rendered_html h2:first-child {
+.dynare-extension h2:first-child {
   margin-top: 0.636em;
 }
-.rendered_html h3:first-child {
+.dynare-extension h3:first-child {
   margin-top: 0.777em;
 }
-.rendered_html h4:first-child {
+.dynare-extension h4:first-child {
   margin-top: 1em;
 }
-.rendered_html h5:first-child {
+.dynare-extension h5:first-child {
   margin-top: 1em;
 }
-.rendered_html h6:first-child {
+.dynare-extension h6:first-child {
   margin-top: 1em;
 }
-.rendered_html ul:not(.list-inline),
-.rendered_html ol:not(.list-inline) {
+.dynare-extension ul:not(.list-inline),
+.dynare-extension ol:not(.list-inline) {
   padding-left: 2em;
 }
-.rendered_html ul {
+.dynare-extension ul {
   list-style: disc;
 }
-.rendered_html ul ul {
+.dynare-extension ul ul {
   list-style: square;
   margin-top: 0;
 }
-.rendered_html ul ul ul {
+.dynare-extension ul ul ul {
   list-style: circle;
 }
-.rendered_html ol {
+.dynare-extension ol {
   list-style: decimal;
 }
-.rendered_html ol ol {
+.dynare-extension ol ol {
   list-style: upper-alpha;
   margin-top: 0;
 }
-.rendered_html ol ol ol {
+.dynare-extension ol ol ol {
   list-style: lower-alpha;
 }
-.rendered_html ol ol ol ol {
+.dynare-extension ol ol ol ol {
   list-style: lower-roman;
 }
-.rendered_html ol ol ol ol ol {
+.dynare-extension ol ol ol ol ol {
   list-style: decimal;
 }
-.rendered_html * + ul {
+.dynare-extension * + ul {
   margin-top: 1em;
 }
-.rendered_html * + ol {
+.dynare-extension * + ol {
   margin-top: 1em;
 }
-.rendered_html hr {
+.dynare-extension hr {
   color: black;
   background-color: black;
 }
-.rendered_html pre {
+.dynare-extension pre {
   margin: 1em 2em;
   padding: 0px;
   background-color: #fff;
 }
-.rendered_html code {
+.dynare-extension code {
   background-color: #eff0f1;
 }
-.rendered_html p code {
+.dynare-extension p code {
   padding: 1px 5px;
 }
-.rendered_html pre code {
+.dynare-extension pre code {
   background-color: #fff;
 }
-.rendered_html pre,
-.rendered_html code {
+.dynare-extension pre,
+.dynare-extension code {
   border: 0;
   color: #000;
   font-size: 100%;
 }
-.rendered_html blockquote {
+.dynare-extension blockquote {
   margin: 1em 2em;
 }
-.rendered_html table {
+.dynare-extension table {
   margin-left: auto;
   margin-right: auto;
   border: none;
@@ -150,13 +151,13 @@
   font-size: 12px;
   table-layout: fixed;
 }
-.rendered_html thead {
+.dynare-extension thead {
   border-bottom: 1px solid black;
   vertical-align: bottom;
 }
-.rendered_html tr,
-.rendered_html th,
-.rendered_html td {
+.dynare-extension tr,
+.dynare-extension th,
+.dynare-extension td {
   text-align: right;
   vertical-align: middle;
   padding: 0.5em 0.5em;
@@ -165,45 +166,45 @@
   max-width: none;
   border: none;
 }
-.rendered_html th {
+.dynare-extension th {
   font-weight: bold;
 }
-.rendered_html tbody tr:nth-child(odd) {
+.dynare-extension tbody tr:nth-child(odd) {
   background: #f5f5f5;
 }
-.rendered_html tbody tr:hover {
+.dynare-extension tbody tr:hover {
   background: rgba(66, 165, 245, 0.2);
 }
-.rendered_html * + table {
+.dynare-extension * + table {
   margin-top: 1em;
 }
-.rendered_html p {
+.dynare-extension p {
   text-align: left;
 }
-.rendered_html * + p {
+.dynare-extension * + p {
   margin-top: 1em;
 }
-.rendered_html img {
+.dynare-extension img {
   display: block;
   margin-left: auto;
   margin-right: auto;
 }
-.rendered_html * + img {
+.dynare-extension * + img {
   margin-top: 1em;
 }
-.rendered_html img,
-.rendered_html svg {
+.dynare-extension img,
+.dynare-extension svg {
   max-width: 100%;
   height: auto;
 }
-.rendered_html img.unconfined,
-.rendered_html svg.unconfined {
+.dynare-extension img.unconfined,
+.dynare-extension svg.unconfined {
   max-width: none;
 }
-.rendered_html .alert {
+.dynare-extension .alert {
   margin-bottom: initial;
 }
-.rendered_html * + .alert {
+.dynare-extension * + .alert {
   margin-top: 1em;
 }
 
@@ -214,14 +215,14 @@ div.output_stderr {
 }
 
 .ansi-red-fg {
-  color: #E75C58;
+  color: #e75c58;
 }
 .ansi-red-bg {
-  background-color: #E75C58;
+  background-color: #e75c58;
 }
 .ansi-red-intense-fg {
-  color: #B22B31;
+  color: #b22b31;
 }
 .ansi-red-intense-bg {
-  background-color: #B22B31;
+  background-color: #b22b31;
 }

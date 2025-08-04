@@ -1,16 +1,19 @@
 {
-    "name": "jupyter_dynare",
+    "name": "jupyter-dynare",
     "version": "0.1.0",
-    "description": "A JupyterLab extension.",
+    "description": "A JupyterLab extension for solving Dynare models",
     "keywords": [
         "jupyter",
         "jupyterlab",
         "jupyterlab-extension"
     ],
-    "homepage": "",
+    "homepage": "https://github.com/ousema-bouaneni/jupyter_dynare",
+    "bugs": {
+        "url": "https://github.com/ousema-bouaneni/jupyter_dynare/issues"
+    },
     "license": "BSD-3-Clause",
     "author": {
-        "name": "Ousema",
+        "name": "Ousema Bouaneni",
         "email": "ousema.bouaneni@quantstack.net"
     },
     "files": [
@@ -23,7 +26,7 @@
     "style": "style/index.css",
     "repository": {
         "type": "git",
-        "url": ".git"
+        "url": "https://github.com/ousema-bouaneni/jupyter_dynare.git"
     },
     "scripts": {
         "build": "jlpm build:lib && jlpm build:labextension:dev",
@@ -47,37 +50,38 @@
         "prettier:check": "jlpm prettier:base --check",
         "stylelint": "jlpm stylelint:check --fix",
         "stylelint:check": "stylelint --cache \"style/**/*.css\"",
+        "test": "jest --coverage",
         "watch": "run-p watch:src watch:labextension",
         "watch:src": "tsc -w --sourceMap",
         "watch:labextension": "jupyter labextension watch ."
     },
     "dependencies": {
-        "@jupyterlab/rendermime-interfaces": "^3.12.5",
-        "@jupyterlab/services": "^7.4.5",
-        "@jupyterlab/nbformat": "^4.4.5",
-        "@lumino/widgets": "^2.7.1"
+        "@jupyterlab/application": "^4.4.5"
     },
     "devDependencies": {
         "@jupyterlab/builder": "^4.4.5",
+        "@jupyterlab/testutils": "^4.4.5",
+        "@types/jest": "^29.5.14",
         "@types/json-schema": "^7.0.15",
-        "@types/react": "^19.1.8",
+        "@types/react": "^18.3.23",
         "@types/react-addons-linked-state-mixin": "^0.14.27",
-        "@typescript-eslint/eslint-plugin": "^8.38.0",
-        "@typescript-eslint/parser": "^8.38.0",
-        "css-loader": "^7.1.2",
-        "eslint": "^9.31.0",
-        "eslint-config-prettier": "^10.1.8",
+        "@typescript-eslint/eslint-plugin": "^6.21.0",
+        "@typescript-eslint/parser": "^6.21.0",
+        "css-loader": "^6.11.0",
+        "eslint": "^8.57.1",
+        "eslint-config-prettier": "^8.10.2",
         "eslint-plugin-prettier": "^5.5.3",
-        "npm-run-all2": "^8.0.4",
+        "jest": "^29.7.0",
+        "npm-run-all2": "^7.0.2",
         "prettier": "^3.6.2",
-        "rimraf": "^6.0.1",
-        "source-map-loader": "^5.0.0",
-        "style-loader": "^4.0.0",
-        "stylelint": "^16.22.0",
-        "stylelint-config-recommended": "^16.0.0",
-        "stylelint-config-standard": "^38.0.0",
+        "rimraf": "^5.0.1",
+        "source-map-loader": "^1.1.3",
+        "style-loader": "^3.3.4",
+        "stylelint": "^15.11.0",
+        "stylelint-config-recommended": "^13.0.0",
+        "stylelint-config-standard": "^35.0.0",
         "stylelint-csstree-validator": "^3.0.0",
-        "stylelint-prettier": "^5.0.3",
+        "stylelint-prettier": "^4.1.0",
         "typescript": "~5.8.3",
         "yjs": "^13.6.27"
     },
@@ -90,14 +94,17 @@
         "access": "public"
     },
     "jupyterlab": {
-        "mimeExtension": true,
+        "extension": true,
         "outputDir": "jupyter_dynare/labextension"
     },
     "eslintIgnore": [
         "node_modules",
         "dist",
         "coverage",
-        "**/*.d.ts"
+        "**/*.d.ts",
+        "tests",
+        "**/__tests__",
+        "ui-tests"
     ],
     "eslintConfig": {
         "extends": [
