@@ -18,15 +18,11 @@ import { Widget } from '@lumino/widgets';
 
 import { Token } from '@lumino/coreutils';
 
-// import { DocumentManager } from '@jupyterlab/docmanager';
-
 import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin,
   ILayoutRestorer
 } from '@jupyterlab/application';
-
-// import { Message } from '@lumino/messaging';
 
 /**
  * The default mime type for the extension.
