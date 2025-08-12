@@ -1,0 +1,37 @@
+[workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+preview = ["pixi-build"]
+
+[tasks]
+install = "pip install -ve . && jupyter labextension develop --overwrite ."
+reinstall = "rm -rf .pixi/envs/default/share/jupyter/labextensions/jupyter-dynare && pip install -ve . && jupyter labextension develop --overwrite ."
+kernel = "python -m ipykernel install --user --name prod --display-name \"Dyno kernel\""
+
+[dependencies]
+nodejs = ">=24.4.0,<24.5"
+jupyter_server = ">=2.4.0,<3"
+pip = ">=25.1.1,<26"
+jupyterlab = ">=4.0.0,<5"
+dyno = { git = "https://github.com/ousema-bouaneni/dyno.py", branch = "main"}
+# dyno.py runtime dependencies, copied from its pixi manifest
+dynare-preprocessor-pylib = "0.0.0.dev1.*"
+dolang = ">=0.0.20"
+numpy = ">=2.0.0"
+scipy = ">=1.12.0"
+pandas = ">=2.2.2"
+typing_extensions = ">=4.12.0"
+
+[pypi-dependencies]
+jupyter_dynare = { path = ".", editable = true }
+
+
+[package]
+name = "dyno"
+version = "0.1.5"
+
+[package.build]
+backend = { name = "pixi-build-python", version = "==0.3.2" }
+
+[package.host-dependencies] 
+hatchling = "==1.26.3"
