@@ -889,9 +889,7 @@ packages:
 - pypi: .
   name: jupyter-dynare
   version: 0.1.0
-  sha256: 11314e993d32aa2675e614fd3ab23b85591709cef056fed480babd993054977c
-  requires_dist:
-  - jupyter-server>=2.4.0,<3
+  sha256: eb9ddd76509ae2a77b7f84b117a34acc4f690c6cc187b742cfd45958fd1e890e
   requires_python: '>=3.9'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/jupyter-lsp-2.2.6-pyhe01879c_0.conda

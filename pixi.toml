@@ -4,9 +4,9 @@ platforms = ["linux-64"]
 preview = ["pixi-build"]
 
 [tasks]
-install = "pip install -ve . && jupyter labextension develop --overwrite ."
-reinstall = "rm -rf .pixi/envs/default/share/jupyter/labextensions/jupyter-dynare && pip install -ve . && jupyter labextension develop --overwrite ."
+install = "rm -rf \".pixi/envs/default/share/jupyter/labextensions/jupyter-dynare\"; pip install -ve . && jupyter labextension develop --overwrite ."
 kernel = "python -m ipykernel install --user --name prod --display-name \"Dyno kernel\""
+lab = {cmd = ["jupyter-lab"], depends-on = ["install", "kernel"]}
 
 [dependencies]
 nodejs = ">=24.4.0,<24.5"
@@ -15,6 +15,7 @@ pip = ">=25.1.1,<26"
 jupyterlab = ">=4.0.0,<5"
 dyno = { git = "https://github.com/ousema-bouaneni/dyno.py", branch = "main"}
 # dyno.py runtime dependencies, copied from its pixi manifest
+# TODO: find a way to avoid this dependency redundancy
 dynare-preprocessor-pylib = "0.0.0.dev1.*"
 dolang = ">=0.0.20"
 numpy = ">=2.0.0"
