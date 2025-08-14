@@ -8,15 +8,21 @@ import {
 
 import { ActivityMonitor } from '@jupyterlab/coreutils';
 
-import { Kernel, KernelManager } from '@jupyterlab/services';
-
-import { IMimeBundle } from '@jupyterlab/nbformat';
-
 import { IWidgetTracker, WidgetTracker } from '@jupyterlab/apputils';
 
-import { Widget } from '@lumino/widgets';
+import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { Token } from '@lumino/coreutils';
+
+import { SessionContext } from '@jupyterlab/apputils';
+
+import { KernelMessage, ServiceManager } from '@jupyterlab/services';
+
+import {
+  OutputArea,
+  OutputAreaModel,
+  SimplifiedOutputArea
+} from '@jupyterlab/outputarea';
 
 import {
   JupyterFrontEnd,
@@ -43,25 +49,34 @@ const RENDER_TIMEOUT = 10;
  * DynareWidget: widget that represents the solution of a mod file
  */
 export class DynareWidget
-  extends DocumentWidget<Widget, DocumentModel>
-  implements IDocumentWidget<Widget, DocumentModel>
+  extends DocumentWidget<SimplifiedOutputArea, DocumentModel>
+  implements IDocumentWidget<SimplifiedOutputArea, DocumentModel>
 {
-  constructor(options: DocumentWidget.IOptions<Widget, DocumentModel>) {
+  constructor(
+    options: DocumentWidget.IOptions<SimplifiedOutputArea, DocumentModel>,
+    servicemanager: ServiceManager.IManager
+  ) {
     super(options);
     this.addClass(CLASS_NAME);
-    const manager = new KernelManager();
-    this._connection = manager.startNew({ name: 'prod' });
-    this._connection.then(conn => {
-      conn.requestExecute({ code: 'from dyno.modfile import Modfile' });
+    this._sessionContext = new SessionContext({
+      sessionManager: servicemanager.sessions,
+      specsManager: servicemanager.kernelspecs,
+      name: 'Kernel Output',
+      kernelPreference: {
+        name: 'prod'
+      }
     });
-    void this.context.ready.then(() => {
-      console.log('update called from ctor');
-      this.update();
-      this._monitor = new ActivityMonitor({
-        signal: this.context.model.contentChanged,
-        timeout: RENDER_TIMEOUT
+    this._sessionContext.startKernel().then(res => {
+      console.log(res);
+      void this.context.ready.then(() => {
+        console.log('update called from ctor');
+        this.update();
+        this._monitor = new ActivityMonitor({
+          signal: this.context.model.contentChanged,
+          timeout: RENDER_TIMEOUT
+        });
+        this._monitor.activityStopped.connect(this.update, this);
       });
-      this._monitor.activityStopped.connect(this.update, this);
     });
   }
 
@@ -82,39 +97,28 @@ export class DynareWidget
       return; // don't try to render empty documents
     }
     const start = performance.now();
-    const code_content = `m=Modfile(txt='''${data}''')\nm.solve()`;
-    // let code_content = `from time import time\nt0 = time()\nfrom dyno.modfile import Modfile\nt1 = time()\nm=Modfile(txt='''${data}''')\nt2 = time()\ns=m.solve()\nt3 = time()\nhtml = s._repr_html_()\nt4 = time()\nprint(f'Module import: {(t1-t0)*1000} ms\\nModel construction: {(t2-t1)*1000} ms\\nModel solving: {(t3-t2)*1000} ms\\nConversion to html: {(t4-t3)*1000} ms\\n->Python total: {(t4-t0)*1000} ms')\nhtml`;
-    this._connection.then(conn => {
-      const future = conn.requestExecute({ code: code_content });
-      future.onIOPub = msg => {
+    const code = `from dyno.modfile import Modfile\nm=Modfile(txt='''${data}''')\nm.solve()`;
+    OutputArea.execute(code, this.content, this._sessionContext)
+      .then((msg: KernelMessage.IExecuteReplyMsg | undefined) => {
         const end = performance.now();
-        // console.log(msg);
-        if (msg.header.msg_type === 'execute_result' && 'data' in msg.content) {
-          const result = msg.content.data as IMimeBundle;
-          this.node.innerHTML = result['text/html'] as string;
-          console.log(`Took ${end - start} milliseconds to render mod file`);
-        } else if (
-          msg.header.msg_type === 'error' &&
-          'ename' in msg.content &&
-          'evalue' in msg.content
-        ) {
-          this.node.innerHTML = `<div class="output_stderr"><span class="ansi-red-intense-fg">Failed to solve mod file </span>
-          <br> <span class="ansi-red-intense-fg"> ${msg.content.ename}: </span> ${msg.content.evalue} </div>`;
-          console.log(`Took ${end - start} milliseconds to show error message`);
-        } else if (msg.header.msg_type === 'stream' && 'text' in msg.content) {
-          console.log(msg.content.text);
-        }
-      };
-    });
+        console.log(msg);
+        console.log(`Took ${end - start} milliseconds to render mod file`);
+      })
+      .catch(reason => {
+        const end = performance.now();
+        console.error(reason);
+        console.log(`Took ${end - start} milliseconds to show error message`);
+      });
   }
 
   // Dispose of resources held by the widget
   dispose(): void {
     this.content.dispose();
+    this._sessionContext.dispose();
     super.dispose();
   }
   private _renderPending = false;
-  private _connection: Promise<Kernel.IKernelConnection>;
+  private _sessionContext: SessionContext;
   private _monitor: ActivityMonitor<DocumentRegistry.IModel, void> | null =
     null;
 }
@@ -126,8 +130,15 @@ export class DynareWidgetFactory extends ABCWidgetFactory<
   DynareWidget,
   DocumentModel
 > {
-  constructor(options: DocumentRegistry.IWidgetFactoryOptions) {
+  constructor(
+    options: DocumentRegistry.IWidgetFactoryOptions,
+    rendermime: IRenderMimeRegistry,
+    servicemanager: ServiceManager.IManager
+  ) {
     super(options);
+    this._outputareamodel = new OutputAreaModel();
+    this._rendermime = rendermime;
+    this._servicemanager = servicemanager;
   }
 
   /**
@@ -136,11 +147,20 @@ export class DynareWidgetFactory extends ABCWidgetFactory<
   protected createNewWidget(
     context: DocumentRegistry.IContext<DocumentModel>
   ): DynareWidget {
-    return new DynareWidget({
-      context,
-      content: new Widget()
-    });
+    return new DynareWidget(
+      {
+        context,
+        content: new SimplifiedOutputArea({
+          model: this._outputareamodel,
+          rendermime: this._rendermime
+        })
+      },
+      this._servicemanager
+    );
   }
+  private _outputareamodel: OutputAreaModel;
+  private _rendermime: IRenderMimeRegistry;
+  private _servicemanager: ServiceManager.IManager;
 }
 /*
  * Export token
@@ -158,13 +178,18 @@ const plugin: JupyterFrontEndPlugin<void> = {
   id: 'jupyter-dynare:plugin',
   description: 'A JupyterLab extension for solving Dynare models',
   autoStart: true,
-  requires: [ILayoutRestorer],
-  activate: (app: JupyterFrontEnd, restorer: ILayoutRestorer) => {
+  requires: [ILayoutRestorer, IRenderMimeRegistry],
+  activate: (
+    app: JupyterFrontEnd,
+    restorer: ILayoutRestorer,
+    rendermime: IRenderMimeRegistry
+  ) => {
     console.log('JupyterLab extension jupyter-dynare is activated!');
     const { commands, shell } = app;
     // Tracker
     const namespace = 'jupyterlab-dynare';
     const tracker = new WidgetTracker<DynareWidget>({ namespace });
+    const servicemanager = app.serviceManager;
     // Track split state
     let splitDone = false;
     let leftEditorRefId: string | null = null;
@@ -183,11 +208,15 @@ const plugin: JupyterFrontEndPlugin<void> = {
     }
 
     // Create widget factory so that manager knows about widget
-    const widgetFactory = new DynareWidgetFactory({
-      name: FACTORY,
-      fileTypes: ['mod'],
-      defaultFor: ['mod']
-    });
+    const widgetFactory = new DynareWidgetFactory(
+      {
+        name: FACTORY,
+        fileTypes: ['mod'],
+        defaultFor: ['mod']
+      },
+      rendermime,
+      servicemanager
+    );
 
     // Add widget to tracker when created
     widgetFactory.widgetCreated.connect(async (sender, widget) => {
