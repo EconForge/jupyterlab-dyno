@@ -136,7 +136,7 @@ export class DynareWidgetFactory extends ABCWidgetFactory<
     servicemanager: ServiceManager.IManager
   ) {
     super(options);
-    this._outputareamodel = new OutputAreaModel();
+    this._outputareamodel = new OutputAreaModel({ trusted: true });
     this._rendermime = rendermime;
     this._servicemanager = servicemanager;
   }
