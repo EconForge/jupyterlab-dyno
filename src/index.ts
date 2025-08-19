@@ -97,7 +97,7 @@ export class DynareWidget
       return; // don't try to render empty documents
     }
     const start = performance.now();
-    const code = `from dyno.modfile import Modfile\nm=Modfile(txt='''${data}''')\nm.solve()`;
+    const code = `%xmode Minimal\nimport warnings\nwarnings.filterwarnings('ignore')\nfrom dyno.modfile import Modfile\nm=Modfile(txt='''${data}''')\nm.solve()`;
     OutputArea.execute(code, this.content, this._sessionContext)
       .then((msg: KernelMessage.IExecuteReplyMsg | undefined) => {
         const end = performance.now();
