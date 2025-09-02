@@ -46,6 +46,11 @@ const CLASS_NAME = 'dynare-extension';
 const RENDER_TIMEOUT = 10;
 
 /**
+ * Link to Plotly's CDN, used to render IRFs
+ */
+const PLOTLY_CDN_URL = 'https://cdn.plot.ly/plotly-3.1.0.min.js';
+
+/**
  * DynareWidget: widget that represents the solution of a mod file
  */
 export class DynareWidget
@@ -78,6 +83,9 @@ export class DynareWidget
         this._monitor.activityStopped.connect(this.update, this);
       });
     });
+    const js = document.createElement('script');
+    js.src = PLOTLY_CDN_URL;
+    this.content.node.appendChild(js);
   }
 
   protected onUpdateRequest(): void {

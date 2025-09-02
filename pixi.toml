@@ -13,16 +13,7 @@ nodejs = ">=24.4.0,<24.5"
 jupyter_server = ">=2.4.0,<3"
 pip = ">=25.1.1,<26"
 jupyterlab = ">=4.0.0,<5"
-dyno = { git = "https://github.com/ousema-bouaneni/dyno.py", branch = "main"}
-# dyno.py runtime dependencies, copied from its pixi manifest
-# TODO: find a way to avoid this dependency redundancy
-dynare-preprocessor-pylib = "0.0.0.dev1.*"
-dolang = ">=0.0.20"
-numpy = ">=2.0.0"
-scipy = ">=1.12.0"
-pandas = ">=2.2.2"
-typing_extensions = ">=4.12.0"
-plotly = ">=5.18.0"
+dyno = { path = "../dyno.py" } 
 
 [pypi-dependencies]
 jupyter_dynare = { path = ".", editable = true }
