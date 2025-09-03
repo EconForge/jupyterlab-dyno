@@ -68,13 +68,12 @@ export class DynareWidget
       specsManager: servicemanager.kernelspecs,
       name: 'Kernel Output',
       kernelPreference: {
-        name: 'prod'
+        name: 'xpython'
       }
     });
     this._sessionContext.startKernel().then(res => {
       console.log(res);
       void this.context.ready.then(() => {
-        console.log('update called from ctor');
         this.update();
         this._monitor = new ActivityMonitor({
           signal: this.context.model.contentChanged,
