@@ -6830,6 +6830,7 @@ __metadata:
   dependencies:
     "@jupyterlab/application": ^4.4.5
     "@jupyterlab/builder": ^4.4.5
+    "@jupyterlab/settingregistry": ^4.4.5
     "@jupyterlab/testutils": ^4.4.5
     "@types/jest": ^29.5.14
     "@types/json-schema": ^7.0.15

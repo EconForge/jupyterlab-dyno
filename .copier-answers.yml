@@ -4,11 +4,10 @@ _src_path: https://github.com/jupyterlab/extension-template
 author_email: ousema.bouaneni@quantstack.net
 author_name: Ousema Bouaneni
 has_binder: true
-has_settings: false
+has_settings: true
 kind: frontend
 labextension_name: jupyter-dynare
 project_short_description: A JupyterLab extension for solving Dynare models
 python_name: jupyter_dynare
 repository: https://github.com/ousema-bouaneni/jupyter_dynare
 test: true
-

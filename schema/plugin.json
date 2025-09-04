@@ -1,0 +1,33 @@
+{
+  "jupyter.lab.shortcuts": [],
+  "title": "Jupyter Dynare settings",
+  "description": "Settings to use when solving a DSGE model",
+  "type": "object",
+  "properties": {
+    "simulation-horizon": {
+      "type": "integer",
+      "title": "Simulation horizon",
+      "description": "Number of periods to simulate for IRFs",
+      "default": 40
+    },
+    "blanchard-kahn": {
+      "type": "boolean",
+      "title": "Blanchard-Kahn",
+      "description": "Whether to verify Blanchard Kahn conditions",
+      "default": false
+    },
+    "deriv-order": {
+      "type": "integer",
+      "title": "Derivation order",
+      "description": "Order of differentiation of the model's endogenous and exogenous variables",
+      "default": 1
+    },
+    "param-deriv-order": {
+      "type": "integer",
+      "title": "Parameter derivation order",
+      "description": "Order of differentiation of the model's parameters",
+      "default": 0
+    }
+  },
+  "additionalProperties": false
+}

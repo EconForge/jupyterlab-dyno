@@ -18,6 +18,8 @@ import { SessionContext } from '@jupyterlab/apputils';
 
 import { KernelMessage, ServiceManager } from '@jupyterlab/services';
 
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
+
 import {
   OutputArea,
   OutputAreaModel,
@@ -29,6 +31,12 @@ import {
   JupyterFrontEndPlugin,
   ILayoutRestorer
 } from '@jupyterlab/application';
+
+// Default settings, see schema/plugin.json for more details
+let simulationHorizon = 40;
+let blanchardKahn = false;
+let derivOrder = 1;
+let paramDerivOrder = 0;
 
 /**
  * The default mime type for the extension.
@@ -49,6 +57,13 @@ const RENDER_TIMEOUT = 10;
  * Link to Plotly's CDN, used to render IRFs
  */
 const PLOTLY_CDN_URL = 'https://cdn.plot.ly/plotly-3.1.0.min.js';
+
+/**
+ * Plugin id, follows a strict convention
+ * package name: "jupyter-dynare" needs to be the same as package.json
+ * settings name: "plugin" needs to be the file name in schema/ that describes extension settings (here plugin.json)
+ */
+const PLUGIN_ID = 'jupyter-dynare:plugin';
 
 /**
  * DynareWidget: widget that represents the solution of a mod file
@@ -182,14 +197,15 @@ const FACTORY = 'Dynare Extension';
  * Initialization data for the jupyter-dynare extension.
  */
 const plugin: JupyterFrontEndPlugin<void> = {
-  id: 'jupyter-dynare:plugin',
+  id: PLUGIN_ID,
   description: 'A JupyterLab extension for solving Dynare models',
   autoStart: true,
-  requires: [ILayoutRestorer, IRenderMimeRegistry],
+  requires: [ILayoutRestorer, IRenderMimeRegistry, ISettingRegistry],
   activate: (
     app: JupyterFrontEnd,
     restorer: ILayoutRestorer,
-    rendermime: IRenderMimeRegistry
+    rendermime: IRenderMimeRegistry,
+    settings: ISettingRegistry
   ) => {
     console.log('JupyterLab extension jupyter-dynare is activated!');
     const { commands, shell } = app;
@@ -267,6 +283,34 @@ const plugin: JupyterFrontEndPlugin<void> = {
           });
         }
       }
+
+      /**
+       * Load the settings for this extension
+       *
+       * @param setting Extension settings
+       */
+      function loadSetting(setting: ISettingRegistry.ISettings): void {
+        simulationHorizon = setting.get('simulation-horizon')
+          .composite as number;
+        blanchardKahn = setting.get('blanchard-kahn').composite as boolean;
+        derivOrder = setting.get('deriv-order').composite as number;
+        paramDerivOrder = setting.get('param-deriv-order').composite as number;
+        console.log(`Simulation horizon = ${simulationHorizon}`);
+        console.log(`Blanchard Kahn = ${blanchardKahn}`);
+        console.log(`Derivation order = ${derivOrder}`);
+        console.log(`Parameter derivation order = ${paramDerivOrder}`);
+      }
+
+      /**
+       * Wait for settings to be loaded and display them in console
+       */
+      settings.load(PLUGIN_ID).then(setting => {
+        // Read the settings
+        loadSetting(setting);
+
+        // Listen for setting changes using Signal
+        setting.changed.connect(loadSetting);
+      });
     });
 
     // Register widget and model factories

@@ -32,4 +32,4 @@ about:
   homepage: https://github.com/${{account}}/${{name}}
   summary: jupyter-dynare
   description: A jupyter extension to solve .mod DSGE models using dyno.py
-  license: BSD 3-Clause
+  license: BSD-3-Clause
