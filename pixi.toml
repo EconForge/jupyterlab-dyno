@@ -21,8 +21,8 @@ jupyter_dynare = { path = ".", editable = true }
 
 
 [package]
-name = "dyno"
-version = "0.1.5"
+name = "jupyter_dynare"
+version = "0.0.0.dev0"
 
 [package.build]
 backend = { name = "pixi-build-python", version = "==0.3.2" }
