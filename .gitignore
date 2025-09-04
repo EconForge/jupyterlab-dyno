@@ -1,3 +1,4 @@
+.pixi
 *.bundle.*
 lib/
 node_modules/
@@ -7,9 +8,9 @@ node_modules/
 *.egg-info/
 .ipynb_checkpoints
 *.tsbuildinfo
-jupyter_dynare/labextension
+jupyter_dsge/labextension
 # Version file is handled by hatchling
-jupyter_dynare/_version.py
+jupyter_dsge/_version.py
 
 # Integration tests
 ui-tests/test-results/
@@ -123,6 +124,3 @@ dmypy.json
 
 # Yarn cache
 .yarn/
-
-# VSCode config files
-.vscode

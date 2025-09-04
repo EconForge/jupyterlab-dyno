@@ -1,5 +1,5 @@
 context:
-  name: jupyter-dynare
+  name: jupyter-dsge
   version: 0.0.0.dev0
   account: ousema-bouaneni
 
@@ -30,6 +30,6 @@ requirements:
     - nlohmann_json ==3.11.3
 about:
   homepage: https://github.com/${{account}}/${{name}}
-  summary: jupyter-dynare
+  summary: jupyter-dsge
   description: A jupyter extension to solve .mod DSGE models using dyno.py
   license: BSD-3-Clause

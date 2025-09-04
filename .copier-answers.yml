@@ -1,13 +1,13 @@
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-_commit: v4.3.8
+_commit: v4.4.0
 _src_path: https://github.com/jupyterlab/extension-template
-author_email: ousema.bouaneni@quantstack.net
+author_email: ousema.bouaneni@polytechnique.edu
 author_name: Ousema Bouaneni
 has_binder: true
 has_settings: true
 kind: frontend
-labextension_name: jupyter-dynare
-project_short_description: A JupyterLab extension for solving Dynare models
-python_name: jupyter_dynare
-repository: https://github.com/ousema-bouaneni/jupyter_dynare
+labextension_name: jupyter-dsge
+project_short_description: A Jupyterlab extension.
+python_name: jupyter_dsge
+repository: ""
 test: true

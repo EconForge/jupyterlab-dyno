@@ -1,6 +1,6 @@
 {
   "jupyter.lab.shortcuts": [],
-  "title": "Jupyter Dynare settings",
+  "title": "Jupyter DSGE settings",
   "description": "Settings to use when solving a DSGE model",
   "type": "object",
   "properties": {

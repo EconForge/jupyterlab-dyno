@@ -1,15 +1,15 @@
 {
-    "name": "jupyter-dynare",
+    "name": "jupyter-dsge",
     "version": "0.1.0",
-    "description": "A JupyterLab extension for solving Dynare models",
+    "description": "A JupyterLab extension for solving DSGE models",
     "keywords": [
         "jupyter",
         "jupyterlab",
         "jupyterlab-extension"
     ],
-    "homepage": "https://github.com/ousema-bouaneni/jupyter_dynare",
+    "homepage": "https://github.com/ousema-bouaneni/jupyter_dsge",
     "bugs": {
-        "url": "https://github.com/ousema-bouaneni/jupyter_dynare/issues"
+        "url": "https://github.com/ousema-bouaneni/jupyter_dsge/issues"
     },
     "license": "BSD-3-Clause",
     "author": {
@@ -27,7 +27,7 @@
     "style": "style/index.css",
     "repository": {
         "type": "git",
-        "url": "https://github.com/ousema-bouaneni/jupyter_dynare.git"
+        "url": "https://github.com/ousema-bouaneni/jupyter_dsge.git"
     },
     "scripts": {
         "build": "jlpm build:lib && jlpm build:labextension:dev",
@@ -39,7 +39,7 @@
         "clean": "jlpm clean:lib",
         "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
         "clean:lintcache": "rimraf .eslintcache .stylelintcache",
-        "clean:labextension": "rimraf jupyter_dynare/labextension jupyter_dynare/_version.py",
+        "clean:labextension": "rimraf jupyter_dsge/labextension jupyter_dsge/_version.py",
         "clean:all": "jlpm clean:lib && jlpm clean:labextension && jlpm clean:lintcache",
         "eslint": "jlpm eslint:check --fix",
         "eslint:check": "eslint . --cache --ext .ts,.tsx",
@@ -97,7 +97,7 @@
     },
     "jupyterlab": {
         "extension": true,
-        "outputDir": "jupyter_dynare/labextension",
+        "outputDir": "jupyter_dsge/labextension",
         "schemaDir": "schema"
     },
     "eslintIgnore": [
