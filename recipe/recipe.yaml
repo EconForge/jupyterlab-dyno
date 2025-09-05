@@ -1,7 +1,7 @@
 context:
   name: jupyter-dsge
   version: 0.0.0.dev0
-  account: ousema-bouaneni
+  account: EconForge
 
 package:
   name: ${{ name|lower }}

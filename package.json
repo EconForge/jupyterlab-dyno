@@ -7,9 +7,9 @@
         "jupyterlab",
         "jupyterlab-extension"
     ],
-    "homepage": "https://github.com/ousema-bouaneni/jupyter_dsge",
+    "homepage": "https://github.com/EconForge/jupyter-dsge",
     "bugs": {
-        "url": "https://github.com/ousema-bouaneni/jupyter_dsge/issues"
+        "url": "https://github.com/EconForge/jupyter-dsge/issues"
     },
     "license": "BSD-3-Clause",
     "author": {
@@ -27,7 +27,7 @@
     "style": "style/index.css",
     "repository": {
         "type": "git",
-        "url": "https://github.com/ousema-bouaneni/jupyter_dsge.git"
+        "url": "https://github.com/EconForge/jupyter-dsge.git"
     },
     "scripts": {
         "build": "jlpm build:lib && jlpm build:labextension:dev",
