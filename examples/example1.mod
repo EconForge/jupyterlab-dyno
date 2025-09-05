@@ -23,7 +23,7 @@
  */
 
 
-var y, c, k, a, h, b;
+var y, c, k, a, h, b, f;
 varexo e, u;
 
 parameters beta, rho, alpha, delta, theta, psi, tau, phi;
@@ -39,6 +39,7 @@ theta = 2.95;
 phi   = 0.1;
 
 model;
+f = 0.5*f(-1);
 c*theta*h^(1+psi)=(1-alpha)*y;
 k = beta*(((exp(b)*c)/(exp(b(+1))*c(+1)))
     *(exp(b(+1))*alpha*y(+1)+(1-delta)*k));

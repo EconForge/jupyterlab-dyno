@@ -176,7 +176,6 @@ export class DynareWidgetFactory extends ABCWidgetFactory<
     servicemanager: ServiceManager.IManager
   ) {
     super(options);
-    this._outputareamodel = new OutputAreaModel({ trusted: true });
     this._rendermime = rendermime;
     this._servicemanager = servicemanager;
   }
@@ -187,18 +186,19 @@ export class DynareWidgetFactory extends ABCWidgetFactory<
   protected createNewWidget(
     context: DocumentRegistry.IContext<DocumentModel>
   ): DynareWidget {
+    // Create a dedicated OutputAreaModel per widget to avoid shared state
+    const model = new OutputAreaModel({ trusted: true });
     return new DynareWidget(
       {
         context,
         content: new SimplifiedOutputArea({
-          model: this._outputareamodel,
+          model,
           rendermime: this._rendermime
         })
       },
       this._servicemanager
     );
   }
-  private _outputareamodel: OutputAreaModel;
   private _rendermime: IRenderMimeRegistry;
   private _servicemanager: ServiceManager.IManager;
 }
