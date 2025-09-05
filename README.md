@@ -3,96 +3,82 @@
 [![Github Actions Status](/workflows/Build/badge.svg)](/actions/workflows/build.yml)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh//main?urlpath=lab)
 
-A Jupyterlab extension.
+A JupyterLab extension for DSGE modeling.
 
-## Requirements
+## Installation
 
-- JupyterLab >= 4.0.0
+- With [micromamba](https://github.com/mamba-org/micromamba-releases):
 
-## Install
+```
+micromamba install -c https://repo.prefix.dev/econforge jupyter_dsge
+```
 
-To install the extension, execute:
+- With [pixi](https://pixi.sh):
+
+```
+pixi add jupyter_dsge
+```
+
+A conda-forge release of `jupyter_dsge` is in the works so the above command should work for you. If it doesn't then add the [EconForge channel](https://repo.prefix.dev/econforge) to the list of channels in your pixi project and try to run it again.
+
+## Development
+
+### Requirements
+
+- [Pixi](https://pixi.sh): a reproducible package management tool
+
+### Development Installation
 
 ```bash
-pip install jupyter_dsge
+pixi install
 ```
 
-## Uninstall
-
-To remove the extension, execute:
+### Run JupyterLab
 
 ```bash
-pip uninstall jupyter_dsge
+pixi run lab
 ```
 
-## Contributing
-
-### Development install
-
-Note: You will need NodeJS to build the extension package.
-
-The `jlpm` command is JupyterLab's pinned version of
-[yarn](https://yarnpkg.com/) that is installed with JupyterLab. You may use
-`yarn` or `npm` in lieu of `jlpm` below.
+### Live development (watch + lab)
 
 ```bash
-# Clone the repo to your local environment
-# Change directory to the jupyter_dsge directory
-# Install package in development mode
-pip install -e "."
-# Link your development version of the extension with JupyterLab
-jupyter labextension develop . --overwrite
-# Rebuild extension Typescript source after making changes
-jlpm build
+pixi run watch
 ```
 
-You can watch the source directory and run JupyterLab at the same time in different terminals to watch for changes in the extension's source and automatically rebuild the extension.
+This runs `jlpm watch` and `jupyter lab` in parallel.
+Every saved change will be rebuilt automatically — just refresh JupyterLab to load it.
+
+### Important files
+
+- `pixi.toml` contains the development environment dependencies and scripts
+- `src/index.ts` contains all of the extension's code and logic
+- `schema/plugin.json` defines the user-facing extension settings
+- `package.json` contains the core JupyterLab nodejs dependencies and their versions
+- `recipe.yaml` contains a conda-build recipe for the extension
+
+## Packaging and release
+
+### For conda-forge
+
+A `conda-build` / `rattler-build` v1 recipe can be found in the `recipe` folder.
+You can test it out by installing `rattler-build` if you don't have it already with
 
 ```bash
-# Watch the source directory in one terminal, automatically rebuilding when needed
-jlpm watch
-# Run JupyterLab in another terminal
-jupyter lab
+pixi global install rattler-build
 ```
 
-With the watch command running, every saved change will immediately be built locally and available in your running JupyterLab. Refresh JupyterLab to load the change in your browser (you may need to wait several seconds for the extension to be rebuilt).
-
-By default, the `jlpm build` command generates the source maps for this extension to make it easier to debug using the browser dev tools. To also generate source maps for the JupyterLab core extensions, you can run the following command:
+and then by running the build command:
 
 ```bash
-jupyter lab build --minimize=False
+rattler-build build -r recipe
 ```
 
-### Development uninstall
+The version that is built with this command is not the version available locally, but rather a github release that can be modified by publishing a new release on the EconForge repo and then editing the context of the `recipe.yaml` file to reflect the new version tag.
 
-```bash
-pip uninstall jupyter_dsge
+### For a prefix.dev channel
+
+If you just want a `.conda` file in order to publish the extension on a custom conda channel (like https://prefix.dev/channels/econforge), this recipe is not needed, and you only need to run the following command in the project root.
+
 ```
-
-In development mode, you will also need to remove the symlink created by `jupyter labextension develop`
-command. To find its location, you can run `jupyter labextension list` to figure out where the `labextensions`
-folder is located. Then you can remove the symlink named `jupyter-dsge` within that folder.
-
-### Testing the extension
-
-#### Frontend tests
-
-This extension is using [Jest](https://jestjs.io/) for JavaScript code testing.
-
-To execute them, execute:
-
-```sh
-jlpm
-jlpm test
+pixi build
 ```
-
-#### Integration tests
-
-This extension uses [Playwright](https://playwright.dev/docs/intro) for the integration tests (aka user level tests).
-More precisely, the JupyterLab helper [Galata](https://github.com/jupyterlab/jupyterlab/tree/master/galata) is used to handle testing the extension in JupyterLab.
-
-More information are provided within the [ui-tests](./ui-tests/README.md) README.
-
-### Packaging the extension
-
-See [RELEASE](RELEASE.md)

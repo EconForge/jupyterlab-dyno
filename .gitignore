@@ -1,4 +1,7 @@
 .pixi
+output
+*.conda
+
 *.bundle.*
 lib/
 node_modules/
