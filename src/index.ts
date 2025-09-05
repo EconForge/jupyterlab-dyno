@@ -118,18 +118,36 @@ export class DynareWidget
     if (data === '') {
       return; // don't try to render empty documents
     }
+    // Use the document path to branch behavior by file type
+    const path = this.context.path.toLowerCase();
+    
+    const isDyno = path.endsWith('.dyno') || path.endsWith('.🦖');
+    const isDynoYAML = path.endsWith('.dyno.yaml');
+    const isMod = path.endsWith('.mod') || path.endsWith('.dynare.mod');
+    // define the engine type (either 'dyno','mod' or 'dynoYAML')
+    const engine = isDyno ? 'dyno' : isDynoYAML ? 'dynoYAML' : isMod ? 'dynare' : 'unknown';
     const start = performance.now();
-    const code = `%xmode Minimal\nimport warnings\nwarnings.filterwarnings('ignore')\nfrom dyno.modfile import Modfile\nm=Modfile(txt='''${data}''')\nm.solve()`;
+    // Choose kernel code based on file type
+    const code = `import warnings
+warnings.filterwarnings('ignore')
+from dyno.report import dsge_report
+engine = '${engine}'
+filename = '${path}'
+txt = '''${data}'''
+dsge_report(txt=txt, filename=filename)`;
+
     OutputArea.execute(code, this.content, this._sessionContext)
       .then((msg: KernelMessage.IExecuteReplyMsg | undefined) => {
         const end = performance.now();
         console.log(msg);
-        console.log(`Took ${end - start} milliseconds to render mod file`);
+    const kind = isDyno ? 'dyno' : isMod ? 'mod' : 'unknown';
+    console.log(`Took ${end - start} milliseconds to render ${kind} file`);
       })
       .catch(reason => {
         const end = performance.now();
         console.error(reason);
-        console.log(`Took ${end - start} milliseconds to show error message`);
+    const kind = isDyno ? 'dyno' : isMod ? 'mod' : 'unknown';
+    console.log(`Took ${end - start} milliseconds to show error message for ${kind} file`);
       });
   }
 
@@ -234,8 +252,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
     const widgetFactory = new DynareWidgetFactory(
       {
         name: FACTORY,
-        fileTypes: ['mod'],
-        defaultFor: ['mod']
+        fileTypes: ['mod', 'dyno', 'dynoYAML'],
+        defaultFor: ['mod','dynare.mod', 'dyno', 'dynoYAML']
       },
       rendermime,
       servicemanager
@@ -320,12 +338,28 @@ const plugin: JupyterFrontEndPlugin<void> = {
     app.docRegistry.addFileType({
       name: 'mod',
       displayName: 'Mod',
-      extensions: ['.mod', '.mod'],
+      extensions: ['.mod', '.dynare.mod'],
       fileFormat: 'text',
       contentType: 'file',
       mimeTypes: [MIME_TYPE]
     });
-  }
+    app.docRegistry.addFileType({
+      name: 'dyno',
+      displayName: 'Dyno',
+      extensions: ['.dyno', '.🦖'],
+      fileFormat: 'text',
+      contentType: 'file',
+      mimeTypes: [MIME_TYPE]
+    });
+    app.docRegistry.addFileType({
+      name: 'dynoYAML',
+      displayName: 'Dyno YAML',
+      extensions: ['.dyno.yaml'],
+        fileFormat: 'text',
+        contentType: 'file',
+        mimeTypes: [MIME_TYPE]
+    });
+  }    
 };
 
 export default plugin;
