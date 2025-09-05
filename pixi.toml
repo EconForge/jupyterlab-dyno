@@ -28,6 +28,6 @@ nodejs = ">=24.4.0,<24.5"
 jupyterlab = ">=4.0.0,<5"
 
 [package.run-dependencies]
-# dyno = ">=0.1.5.dev5"
+dyno = ">=0.1.5.dev7"
 xeus-python = ">=0.17.4,<0.18"
 nlohmann_json = "==3.11.3"
