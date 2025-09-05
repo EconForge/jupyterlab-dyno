@@ -19,7 +19,7 @@ micromamba install -c https://repo.prefix.dev/econforge jupyter_dsge
 pixi add jupyter_dsge
 ```
 
-A conda-forge release of `jupyter_dsge` is in the works so the above command should work for you. If it doesn't then add the [EconForge channel](https://repo.prefix.dev/econforge) to the list of channels in your pixi project and try to run it again.
+A conda-forge release of `jupyter_dsge` is in the works so the above command should work for you. If it doesn't then add the `"https://repo.prefix.dev/econforge"` to the list of channels in your pixi project and try to run it again.
 
 ## Development
 
