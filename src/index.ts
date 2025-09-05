@@ -34,9 +34,10 @@ import {
 
 // Default settings, see schema/plugin.json for more details
 let simulationHorizon = 40;
-let blanchardKahn = false;
 let derivOrder = 1;
 let paramDerivOrder = 0;
+let modfilePreprocessor = 'lark';
+let global_setting = {};
 
 /**
  * The default mime type for the extension.
@@ -127,14 +128,23 @@ export class DynareWidget
     // define the engine type (either 'dyno','mod' or 'dynoYAML')
     const engine = isDyno ? 'dyno' : isDynoYAML ? 'dynoYAML' : isMod ? 'dynare' : 'unknown';
     const start = performance.now();
+
+    console.log(global_setting);
     // Choose kernel code based on file type
     const code = `import warnings
+options = ${JSON.stringify(global_setting)}
 warnings.filterwarnings('ignore')
+options = {
+    'simulation_horizon': ${simulationHorizon},
+    'deriv_order': ${derivOrder},
+    'param_deriv_order': ${paramDerivOrder},
+    'modfile_preprocessor': '${modfilePreprocessor}'
+}
 from dyno.report import dsge_report
 engine = '${engine}'
 filename = '${path}'
 txt = '''${data}'''
-dsge_report(txt=txt, filename=filename)`;
+dsge_report(txt=txt, filename=filename, **options)`;
 
     OutputArea.execute(code, this.content, this._sessionContext)
       .then((msg: KernelMessage.IExecuteReplyMsg | undefined) => {
@@ -308,13 +318,15 @@ const plugin: JupyterFrontEndPlugin<void> = {
        * @param setting Extension settings
        */
       function loadSetting(setting: ISettingRegistry.ISettings): void {
+        modfilePreprocessor = setting.get('modfile-preprocessor').composite as string;
         simulationHorizon = setting.get('simulation-horizon')
           .composite as number;
-        blanchardKahn = setting.get('blanchard-kahn').composite as boolean;
         derivOrder = setting.get('deriv-order').composite as number;
         paramDerivOrder = setting.get('param-deriv-order').composite as number;
+        // global_setting = setting.toJSON();
+        global_setting = setting.composite as any;
+        console.log(global_setting);
         console.log(`Simulation horizon = ${simulationHorizon}`);
-        console.log(`Blanchard Kahn = ${blanchardKahn}`);
         console.log(`Derivation order = ${derivOrder}`);
         console.log(`Parameter derivation order = ${paramDerivOrder}`);
       }

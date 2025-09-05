@@ -4,17 +4,18 @@
   "description": "Settings to use when solving a DSGE model",
   "type": "object",
   "properties": {
+    "modfile-preprocessor": {
+      "type": "string",
+      "title": "Modfile Preprocessor",
+      "description": "How to preprocess the mod file before solving the model.",
+      "enum": ["dynare","lark"],
+      "default": "lark"
+    },
     "simulation-horizon": {
       "type": "integer",
       "title": "Simulation horizon",
       "description": "Number of periods to simulate for IRFs",
       "default": 40
-    },
-    "blanchard-kahn": {
-      "type": "boolean",
-      "title": "Blanchard-Kahn",
-      "description": "Whether to verify Blanchard Kahn conditions",
-      "default": false
     },
     "deriv-order": {
       "type": "integer",
