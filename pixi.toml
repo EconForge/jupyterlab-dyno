@@ -15,7 +15,7 @@ nodejs = ">=24.4.0,<24.5"
 
 [package]
 name = "jupyter_dsge"
-version = "0.0.0.dev0"
+version = "0.0.0.dev1"
 
 [package.build]
 backend = { name = "pixi-build-python", version = "==0.3.2" }
