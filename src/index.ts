@@ -33,11 +33,8 @@ import {
 } from '@jupyterlab/application';
 
 // Default settings, see schema/plugin.json for more details
-let simulationHorizon = 40;
-let derivOrder = 1;
-let paramDerivOrder = 0;
-let modfilePreprocessor = 'lark';
 let global_setting = {};
+let preserveScrollPosition = true;
 
 /**
  * The default mime type for the extension.
@@ -74,11 +71,13 @@ export class DynareWidget
   implements IDocumentWidget<SimplifiedOutputArea, DocumentModel>
 {
   constructor(
-    options: DocumentWidget.IOptions<SimplifiedOutputArea, DocumentModel>,
-    servicemanager: ServiceManager.IManager
+  options: DocumentWidget.IOptions<SimplifiedOutputArea, DocumentModel>,
+  servicemanager: ServiceManager.IManager,
+  rendermime: IRenderMimeRegistry
   ) {
     super(options);
     this.addClass(CLASS_NAME);
+  this._rendermime = rendermime;
     this._sessionContext = new SessionContext({
       sessionManager: servicemanager.sessions,
       specsManager: servicemanager.kernelspecs,
@@ -119,6 +118,13 @@ export class DynareWidget
     if (data === '') {
       return; // don't try to render empty documents
     }
+    // Preserve scroll position of the output panel across re-renders (if enabled)
+    const container = this.content.node;
+    const prevScrollTop = preserveScrollPosition ? container.scrollTop : 0;
+    const prevScrollLeft = preserveScrollPosition ? container.scrollLeft : 0;
+    const prevScrollableHeight = preserveScrollPosition
+      ? Math.max(0, container.scrollHeight - container.clientHeight)
+      : 0;
     // Use the document path to branch behavior by file type
     const path = this.context.path.toLowerCase();
     
@@ -132,33 +138,166 @@ export class DynareWidget
     console.log(global_setting);
     // Choose kernel code based on file type
     const code = `import warnings
-options = ${JSON.stringify(global_setting)}
+import json
+options = json.loads("""${JSON.stringify(global_setting)}""")
 warnings.filterwarnings('ignore')
-options = {
-    'simulation_horizon': ${simulationHorizon},
-    'deriv_order': ${derivOrder},
-    'param_deriv_order': ${paramDerivOrder},
-    'modfile_preprocessor': '${modfilePreprocessor}'
-}
 from dyno.report import dsge_report
 engine = '${engine}'
 filename = '${path}'
 txt = '''${data}'''
 dsge_report(txt=txt, filename=filename, **options)`;
 
-    OutputArea.execute(code, this.content, this._sessionContext)
+    // Execute in a hidden output area to avoid clearing the visible output unnecessarily
+    const tempModel = new OutputAreaModel({ trusted: true });
+    const tempArea = new SimplifiedOutputArea({
+      model: tempModel,
+      rendermime: this._rendermime
+    });
+
+    const prevOutputs = this._safeToJSON(this.content.model);
+
+    OutputArea.execute(code, tempArea, this._sessionContext)
       .then((msg: KernelMessage.IExecuteReplyMsg | undefined) => {
         const end = performance.now();
-        console.log(msg);
-    const kind = isDyno ? 'dyno' : isMod ? 'mod' : 'unknown';
-    console.log(`Took ${end - start} milliseconds to render ${kind} file`);
+        const nextOutputs = this._safeToJSON(tempModel);
+
+        const kind = isDyno ? 'dyno' : isMod ? 'mod' : 'unknown';
+        console.log(`Took ${end - start} milliseconds to render ${kind} file`);
+
+        const same = this._outputsEqual(prevOutputs, nextOutputs);
+        if (!same && nextOutputs) {
+          // Update visible model only if content changed
+          this._applyOutputsToVisibleModel(nextOutputs);
+        }
+
+        // Restore scroll position after DOM/content updates
+        if (preserveScrollPosition) {
+          // Use two RAFs to ensure layout and rendering have settled
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              const newScrollableHeight = Math.max(
+                0,
+                container.scrollHeight - container.clientHeight
+              );
+              const ratio = prevScrollableHeight
+                ? prevScrollTop / prevScrollableHeight
+                : 0;
+              const targetTop = Math.min(
+                newScrollableHeight,
+                Math.round(ratio * newScrollableHeight)
+              );
+              // Prefer exact restoration when possible
+              const preciseTop = Math.min(newScrollableHeight, prevScrollTop);
+              container.scrollTo({
+                top: newScrollableHeight > 0 ? preciseTop : 0,
+                left: prevScrollLeft,
+                behavior: 'auto'
+              });
+              // If content height changed significantly, fall back to ratio-based position
+              if (Math.abs(newScrollableHeight - prevScrollableHeight) > 5) {
+                container.scrollTo({ top: targetTop, left: prevScrollLeft });
+              }
+            });
+          });
+        }
       })
       .catch(reason => {
         const end = performance.now();
         console.error(reason);
-    const kind = isDyno ? 'dyno' : isMod ? 'mod' : 'unknown';
-    console.log(`Took ${end - start} milliseconds to show error message for ${kind} file`);
+        const kind = isDyno ? 'dyno' : isMod ? 'mod' : 'unknown';
+        console.log(
+          `Took ${end - start} milliseconds to show error message for ${kind} file`
+        );
+        // On error, propagate the error outputs to visible model
+        const nextOutputs = this._safeToJSON(tempModel);
+        if (nextOutputs) {
+          this._applyOutputsToVisibleModel(nextOutputs);
+        }
+        // Attempt to restore previous scroll even on error
+        if (preserveScrollPosition) {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              container.scrollTo({ top: prevScrollTop, left: prevScrollLeft });
+            });
+          });
+        }
       });
+  }
+
+  /**
+   * Safely extract nbformat outputs as JSON from a model, if available.
+   */
+  private _safeToJSON(model: any): any[] | null {
+    try {
+      if (model && typeof model.toJSON === 'function') {
+        return model.toJSON();
+      }
+    } catch (e) {
+      console.warn('toJSON() failed on output model', e);
+    }
+    return null;
+  }
+
+  /**
+   * Normalize outputs to compare equality while ignoring transient fields
+   * like execution_count and transient metadata.
+   */
+  private _normalizeOutputs(outputs: any[] | null): any[] | null {
+    if (!outputs) {
+      return null;
+    }
+    const normalizeData = (data: any) => {
+      if (!data || typeof data !== 'object') {
+        return data;
+      }
+      const keys = Object.keys(data).sort();
+      const norm: any = {};
+      for (const k of keys) {
+        norm[k] = data[k];
+      }
+      return norm;
+    };
+    return outputs.map(o => {
+      const c: any = { ...o };
+      delete c.execution_count;
+      delete c.transient;
+      if (c.metadata && typeof c.metadata === 'object') {
+        const m = { ...c.metadata };
+        delete (m as any).execution;
+        c.metadata = m;
+      }
+      if (c.data) {
+        c.data = normalizeData(c.data);
+      }
+      return c;
+    });
+  }
+
+  private _outputsEqual(a: any[] | null, b: any[] | null): boolean {
+    const na = this._normalizeOutputs(a);
+    const nb = this._normalizeOutputs(b);
+    return JSON.stringify(na) === JSON.stringify(nb);
+  }
+
+  /**
+   * Apply outputs array to the visible output area model.
+   */
+  private _applyOutputsToVisibleModel(outputs: any[]): void {
+    const model: any = this.content.model as any;
+    if (typeof model.fromJSON === 'function') {
+      model.fromJSON(outputs);
+      return;
+    }
+    if (typeof model.clear === 'function') {
+      model.clear();
+    }
+    if (Array.isArray(outputs)) {
+      for (const out of outputs) {
+        if (typeof model.add === 'function') {
+          model.add(out);
+        }
+      }
+    }
   }
 
   // Dispose of resources held by the widget
@@ -171,6 +310,7 @@ dsge_report(txt=txt, filename=filename, **options)`;
   private _sessionContext: SessionContext;
   private _monitor: ActivityMonitor<DocumentRegistry.IModel, void> | null =
     null;
+  private _rendermime: IRenderMimeRegistry;
 }
 
 /**
@@ -206,7 +346,8 @@ export class DynareWidgetFactory extends ABCWidgetFactory<
           rendermime: this._rendermime
         })
       },
-      this._servicemanager
+  this._servicemanager,
+  this._rendermime
     );
   }
   private _rendermime: IRenderMimeRegistry;
@@ -318,17 +459,10 @@ const plugin: JupyterFrontEndPlugin<void> = {
        * @param setting Extension settings
        */
       function loadSetting(setting: ISettingRegistry.ISettings): void {
-        modfilePreprocessor = setting.get('modfile-preprocessor').composite as string;
-        simulationHorizon = setting.get('simulation-horizon')
-          .composite as number;
-        derivOrder = setting.get('deriv-order').composite as number;
-        paramDerivOrder = setting.get('param-deriv-order').composite as number;
-        // global_setting = setting.toJSON();
         global_setting = setting.composite as any;
+        preserveScrollPosition = (setting.get('preserve-scroll-position')
+          .composite as boolean) ?? true;
         console.log(global_setting);
-        console.log(`Simulation horizon = ${simulationHorizon}`);
-        console.log(`Derivation order = ${derivOrder}`);
-        console.log(`Parameter derivation order = ${paramDerivOrder}`);
       }
 
       /**

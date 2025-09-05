@@ -4,6 +4,12 @@
   "description": "Settings to use when solving a DSGE model",
   "type": "object",
   "properties": {
+    "preserve-scroll-position": {
+      "type": "boolean",
+      "title": "Preserve scroll position",
+      "description": "If enabled, the viewer will attempt to preserve its scroll position after re-rendering.",
+      "default": true
+    },
     "modfile-preprocessor": {
       "type": "string",
       "title": "Modfile Preprocessor",
