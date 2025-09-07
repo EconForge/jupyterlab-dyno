@@ -10,12 +10,12 @@ watch = "jlpm watch & jupyter lab"
 [dependencies]
 jupyterlab = ">=4.0.0,<5"
 jupyter_dsge = { path = "." }
-dyno = {path = "/home/pablo/Econforge/dyno.py"}
+dyno = ">=0.1.5.dev7"
 nodejs = ">=24.4.0,<24.5"
 
 [package]
 name = "jupyter_dsge"
-version = "0.0.0.dev1"
+version = "0.0.0.dev2"
 
 [package.build]
 backend = { name = "pixi-build-python", version = "==0.3.2" }
@@ -28,7 +28,6 @@ nodejs = ">=24.4.0,<24.5"
 jupyterlab = ">=4.0.0,<5"
 
 [package.run-dependencies]
-#dyno = ">=0.1.5.dev7"
-dyno = {'path'='/home/pablo/Econforge/dyno.py'}
+dyno = ">=0.1.5.dev7"
 xeus-python = ">=0.17.4,<0.18"
 nlohmann_json = "==3.11.3"
