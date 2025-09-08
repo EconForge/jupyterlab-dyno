@@ -1,4 +1,4 @@
-# Making a new release of jupyter_dsge
+# Making a new release of jupyterlab_dsge
 
 The extension can be published to `PyPI` and `npm` manually or using the [Jupyter Releaser](https://github.com/jupyter-server/jupyter_releaser).
 

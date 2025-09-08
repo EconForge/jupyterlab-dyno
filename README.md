@@ -1,4 +1,4 @@
-# jupyter_dsge
+# jupyterlab_dsge
 
 [![Github Actions Status](/workflows/Build/badge.svg)](/actions/workflows/build.yml)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh//main?urlpath=lab)
@@ -10,16 +10,16 @@ A JupyterLab extension for DSGE modeling.
 - With [micromamba](https://github.com/mamba-org/micromamba-releases):
 
 ```
-micromamba install -c https://repo.prefix.dev/econforge jupyter_dsge
+micromamba install -c https://repo.prefix.dev/econforge jupyterlab_dsge
 ```
 
 - With [pixi](https://pixi.sh):
 
 ```
-pixi add jupyter_dsge
+pixi add jupyterlab_dsge
 ```
 
-A conda-forge release of `jupyter_dsge` is in the works so the above command should work for you. If it doesn't then add the `"https://repo.prefix.dev/econforge"` to the list of channels in your pixi project and try to run it again.
+A conda-forge release of `jupyterlab_dsge` is in the works so the above command should work for you. If it doesn't then add the `"https://repo.prefix.dev/econforge"` to the list of channels in your pixi project and try to run it again.
 
 ## Development
 

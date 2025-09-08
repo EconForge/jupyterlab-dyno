@@ -6,8 +6,8 @@ author_name: Ousema Bouaneni
 has_binder: true
 has_settings: true
 kind: frontend
-labextension_name: jupyter-dsge
+labextension_name: jupyterlab-dsge
 project_short_description: A Jupyterlab extension.
-python_name: jupyter_dsge
+python_name: jupyterlab_dsge
 repository: ""
 test: true

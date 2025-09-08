@@ -1,5 +1,5 @@
 {
-    "name": "jupyter-dsge",
+    "name": "jupyterlab-dsge",
     "version": "0.1.0",
     "description": "A JupyterLab extension for solving DSGE models",
     "keywords": [
@@ -7,15 +7,21 @@
         "jupyterlab",
         "jupyterlab-extension"
     ],
-    "homepage": "https://github.com/EconForge/jupyter-dsge",
+    "homepage": "https://github.com/EconForge/jupyterlab-dsge",
     "bugs": {
-        "url": "https://github.com/EconForge/jupyter-dsge/issues"
+        "url": "https://github.com/EconForge/jupyterlab-dsge/issues"
     },
     "license": "BSD-3-Clause",
-    "author": {
-        "name": "Ousema Bouaneni",
-        "email": "ousema.bouaneni@polytechnique.edu"
-    },
+    "contributors": [
+        {
+            "name": "Ousema Bouaneni",
+            "email": "ousema.bouaneni@polytechnique.edu"
+        },
+        {
+            "name": "Pablo Winant",
+            "email": "pablo.winant@gmail.com"
+        }
+    ],
     "files": [
         "lib/**/*.{d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
         "style/**/*.{css,js,eot,gif,html,jpg,json,png,svg,woff2,ttf}",
@@ -27,7 +33,7 @@
     "style": "style/index.css",
     "repository": {
         "type": "git",
-        "url": "https://github.com/EconForge/jupyter-dsge.git"
+        "url": "https://github.com/EconForge/jupyterlab-dsge.git"
     },
     "scripts": {
         "build": "jlpm build:lib && jlpm build:labextension:dev",
@@ -39,7 +45,7 @@
         "clean": "jlpm clean:lib",
         "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
         "clean:lintcache": "rimraf .eslintcache .stylelintcache",
-        "clean:labextension": "rimraf jupyter_dsge/labextension jupyter_dsge/_version.py",
+        "clean:labextension": "rimraf jupyterlab_dsge/labextension jupyterlab_dsge/_version.py",
         "clean:all": "jlpm clean:lib && jlpm clean:labextension && jlpm clean:lintcache",
         "eslint": "jlpm eslint:check --fix",
         "eslint:check": "eslint . --cache --ext .ts,.tsx",
@@ -97,7 +103,7 @@
     },
     "jupyterlab": {
         "extension": true,
-        "outputDir": "jupyter_dsge/labextension",
+        "outputDir": "jupyterlab_dsge/labextension",
         "schemaDir": "schema"
     },
     "eslintIgnore": [
