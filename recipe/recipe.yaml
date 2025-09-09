@@ -1,5 +1,5 @@
 context:
-  name: jupyterlab-dsge
+  name: jupyterlab-dyno
   version: 0.0.0.dev0
   account: EconForge
 
@@ -30,6 +30,6 @@ requirements:
     - nlohmann_json ==3.11.3
 about:
   homepage: https://github.com/${{account}}/${{name}}
-  summary: jupyterlab-dsge
+  summary: jupyterlab-dyno
   description: A jupyter extension to solve .mod DSGE models using dyno.py
   license: BSD-3-Clause

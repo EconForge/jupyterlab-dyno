@@ -1,7 +1,7 @@
 {
-  "name": "jupyterlab-dsge-ui-tests",
+  "name": "jupyterlab-dyno-ui-tests",
   "version": "1.0.0",
-  "description": "JupyterLab jupyterlab-dsge Integration Tests",
+  "description": "JupyterLab jupyterlab-dyno Integration Tests",
   "private": true,
   "scripts": {
     "start": "jupyter lab --config jupyter_server_test_config.py",

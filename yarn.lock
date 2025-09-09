@@ -6790,9 +6790,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jupyterlab-dsge@workspace:.":
+"jupyterlab-dyno@workspace:.":
   version: 0.0.0-use.local
-  resolution: "jupyterlab-dsge@workspace:."
+  resolution: "jupyterlab-dyno@workspace:."
   dependencies:
     "@jupyterlab/application": ^4.4.5
     "@jupyterlab/builder": ^4.4.5

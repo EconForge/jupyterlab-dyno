@@ -44,7 +44,7 @@ const MIME_TYPE = 'text/mod';
 /**
  * The class name added to the extension.
  */
-const CLASS_NAME = 'jupyterlab-dsge';
+const CLASS_NAME = 'jupyterlab-dyno';
 
 /**
  * Timeout between modification and render in milliseconds
@@ -58,10 +58,10 @@ const PLOTLY_CDN_URL = 'https://cdn.plot.ly/plotly-3.1.0.min.js';
 
 /**
  * Plugin id, follows a strict convention
- * package name: "jupyterlab-dsge" needs to be the same as package.json
+ * package name: "jupyterlab-dyno" needs to be the same as package.json
  * settings name: "plugin" needs to be the file name in schema/ that describes extension settings (here plugin.json)
  */
-const PLUGIN_ID = 'jupyterlab-dsge:plugin';
+const PLUGIN_ID = 'jupyterlab-dyno:plugin';
 
 /**
  * DynareWidget: widget that represents the solution of a mod file
@@ -363,7 +363,7 @@ export const IDynareTracker = new Token<IWidgetTracker<DynareWidget>>(
 const FACTORY = 'DSGE extension';
 
 /**
- * Initialization data for the jupyterlab-dsge extension.
+ * Initialization data for the jupyterlab-dyno extension.
  */
 const plugin: JupyterFrontEndPlugin<void> = {
   id: PLUGIN_ID,
@@ -376,10 +376,10 @@ const plugin: JupyterFrontEndPlugin<void> = {
     rendermime: IRenderMimeRegistry,
     settings: ISettingRegistry
   ) => {
-    console.log('JupyterLab extension jupyterlab-dsge is activated!');
+    console.log('JupyterLab extension jupyterlab-dyno is activated!');
     const { commands, shell } = app;
     // Tracker
-    const namespace = 'jupyterlab-dsge';
+    const namespace = 'jupyterlab-dyno';
     const tracker = new WidgetTracker<DynareWidget>({ namespace });
     const servicemanager = app.serviceManager;
     // Track split state

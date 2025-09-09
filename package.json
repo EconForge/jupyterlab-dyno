@@ -1,5 +1,5 @@
 {
-    "name": "jupyterlab-dsge",
+    "name": "jupyterlab-dyno",
     "version": "0.1.0",
     "description": "A JupyterLab extension for solving DSGE models",
     "keywords": [
@@ -7,9 +7,9 @@
         "jupyterlab",
         "jupyterlab-extension"
     ],
-    "homepage": "https://github.com/EconForge/jupyterlab-dsge",
+    "homepage": "https://github.com/EconForge/jupyterlab-dyno",
     "bugs": {
-        "url": "https://github.com/EconForge/jupyterlab-dsge/issues"
+        "url": "https://github.com/EconForge/jupyterlab-dyno/issues"
     },
     "license": "BSD-3-Clause",
     "contributors": [
@@ -33,7 +33,7 @@
     "style": "style/index.css",
     "repository": {
         "type": "git",
-        "url": "https://github.com/EconForge/jupyterlab-dsge.git"
+        "url": "https://github.com/EconForge/jupyterlab-dyno.git"
     },
     "scripts": {
         "build": "jlpm build:lib && jlpm build:labextension:dev",
@@ -45,7 +45,7 @@
         "clean": "jlpm clean:lib",
         "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
         "clean:lintcache": "rimraf .eslintcache .stylelintcache",
-        "clean:labextension": "rimraf jupyterlab_dsge/labextension jupyterlab_dsge/_version.py",
+        "clean:labextension": "rimraf jupyterlab_dyno/labextension jupyterlab_dyno/_version.py",
         "clean:all": "jlpm clean:lib && jlpm clean:labextension && jlpm clean:lintcache",
         "eslint": "jlpm eslint:check --fix",
         "eslint:check": "eslint . --cache --ext .ts,.tsx",
@@ -103,7 +103,7 @@
     },
     "jupyterlab": {
         "extension": true,
-        "outputDir": "jupyterlab_dsge/labextension",
+        "outputDir": "jupyterlab_dyno/labextension",
         "schemaDir": "schema"
     },
     "eslintIgnore": [

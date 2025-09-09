@@ -3,7 +3,7 @@ requires = ["hatchling>=1.5.0", "jupyterlab>=4.0.0,<5", "hatch-nodejs-version>=0
 build-backend = "hatchling.build"
 
 [project]
-name = "jupyterlab_dsge"
+name = "jupyterlab_dyno"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.9"
@@ -33,24 +33,24 @@ source = "nodejs"
 fields = ["description", "authors", "urls", "keywords"]
 
 [tool.hatch.build.targets.sdist]
-artifacts = ["jupyterlab_dsge/labextension"]
+artifacts = ["jupyterlab_dyno/labextension"]
 exclude = [".github", "binder"]
 
 [tool.hatch.build.targets.wheel.shared-data]
-"jupyterlab_dsge/labextension" = "share/jupyter/labextensions/jupyterlab-dsge"
-"install.json" = "share/jupyter/labextensions/jupyterlab-dsge/install.json"
+"jupyterlab_dyno/labextension" = "share/jupyter/labextensions/jupyterlab-dyno"
+"install.json" = "share/jupyter/labextensions/jupyterlab-dyno/install.json"
 
 [tool.hatch.build.hooks.version]
-path = "jupyterlab_dsge/_version.py"
+path = "jupyterlab_dyno/_version.py"
 
 [tool.hatch.build.hooks.jupyter-builder]
 dependencies = ["hatch-jupyter-builder>=0.5"]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = [
-    "jupyterlab_dsge/labextension/static/style.js",
-    "jupyterlab_dsge/labextension/package.json",
+    "jupyterlab_dyno/labextension/static/style.js",
+    "jupyterlab_dyno/labextension/package.json",
 ]
-skip-if-exists = ["jupyterlab_dsge/labextension/static/style.js"]
+skip-if-exists = ["jupyterlab_dyno/labextension/static/style.js"]
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
 build_cmd = "build:prod"
@@ -60,7 +60,7 @@ npm = ["jlpm"]
 build_cmd = "install:extension"
 npm = ["jlpm"]
 source_dir = "src"
-build_dir = "jupyterlab_dsge/labextension"
+build_dir = "jupyterlab_dyno/labextension"
 
 [tool.jupyter-releaser.options]
 version_cmd = "hatch version"

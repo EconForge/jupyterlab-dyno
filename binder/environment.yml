@@ -1,10 +1,10 @@
-# a mybinder.org-ready environment for demoing jupyterlab_dsge
+# a mybinder.org-ready environment for demoing jupyterlab_dyno
 # this environment may also be used locally on Linux/MacOS/Windows, e.g.
 #
 #   conda env update --file binder/environment.yml
-#   conda activate jupyterlab-dsge-demo
+#   conda activate jupyterlab-dyno-demo
 #
-name: jupyterlab-dsge-demo
+name: jupyterlab-dyno-demo
 
 channels:
   - conda-forge

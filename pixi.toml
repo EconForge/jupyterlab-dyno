@@ -9,12 +9,12 @@ watch = "jlpm watch & jupyter lab"
 
 [dependencies]
 jupyterlab = ">=4.0.0,<5"
-jupyterlab_dsge = { path = "." }
+jupyterlab_dyno = { path = "." }
 dyno = ">=0.1.5.dev7"
 nodejs = ">=24.4.0,<24.5"
 
 [package]
-name = "jupyterlab_dsge"
+name = "jupyterlab_dyno"
 version = "0.0.0.dev2"
 
 [package.build]
