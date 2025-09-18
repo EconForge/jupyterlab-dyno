@@ -2,7 +2,7 @@
 beta <- 0.985
 delta <- 0.025
 nss <- 0.33
-eta <- 1.0
+eta <- 1.05
 alpha <- .331
 rho <- .95111
 khi <- (1-alpha)*(1-nss)^eta/nss*(1/beta-1+delta)/(1/beta-1+delta-delta*alpha)
@@ -26,6 +26,5 @@ y[~] <- k[~]^alpha*n[~]^(1-alpha)
 w[~] <- (1-alpha)*y[~]/n[~]
 i[~] <- delta*k[~]
 c[~] <- y[~]-i[~]
-
 
 epsilon[t] <- N(0,0.001)
