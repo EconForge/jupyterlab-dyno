@@ -156,6 +156,7 @@ dsge_report(txt=txt, filename=filename, **options)`;
 
     const prevOutputs = this._safeToJSON(this.content.model);
 
+
     OutputArea.execute(code, tempArea, this._sessionContext)
       .then((msg: KernelMessage.IExecuteReplyMsg | undefined) => {
         const end = performance.now();
@@ -360,7 +361,7 @@ export const IDynareTracker = new Token<IWidgetTracker<DynareWidget>>(
   'dynare-tracker'
 );
 
-const FACTORY = 'DSGE extension';
+const FACTORY = 'Dyno extension';
 
 /**
  * Initialization data for the jupyterlab-dyno extension.

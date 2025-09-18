@@ -1,6 +1,6 @@
 {
   "jupyter.lab.shortcuts": [],
-  "title": "Jupyter DSGE settings",
+  "title": "Jupyter Dyno settings",
   "description": "Settings to use when solving a DSGE model",
   "type": "object",
   "properties": {
@@ -29,11 +29,11 @@
       "description": "Order of differentiation of the model's endogenous and exogenous variables",
       "default": 1
     },
-    "param-deriv-order": {
-      "type": "integer",
-      "title": "Parameter derivation order",
-      "description": "Order of differentiation of the model's parameters",
-      "default": 0
+    "kernel-restart": {
+      "type": "boolean",
+      "title": "Restart Kernel on Solve",
+      "description": "Restart the kernel everytime the model is solved (for development purpose).",
+      "default": false
     }
   },
   "additionalProperties": false
