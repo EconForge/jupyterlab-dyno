@@ -35,6 +35,20 @@
       "description": "Restart the kernel everytime the model is solved (for development purpose).",
       "default": false
     }
+    ,
+    "output_type": {
+      "type": "string",
+      "title": "Output Type",
+      "description": "Type of output to generate (e.g., markdown, html, etc.)",
+      "enum": ["markdown", "html","text"],
+      "default": "markdown"
+    },
+    "check_output": {
+      "type": "boolean",
+      "title": "Debug Output",
+      "description": "Debug: input is printed directly. ",
+      "default": false
+    }
   },
   "additionalProperties": false
 }

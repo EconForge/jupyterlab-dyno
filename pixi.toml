@@ -19,6 +19,8 @@ altair = ">=5.5.0,<6"
 myst-parser = ">=4.0.1,<5"
 jupyterlab-myst = ">=2.4.2,<3"
 mistune = ">=3.1.4,<4"
+markdown-it-py = ">=3.0.0,<4"
+rich = ">=14.1.0,<15"
 
 [package]
 name = "jupyterlab_dyno"
