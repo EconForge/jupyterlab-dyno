@@ -11,7 +11,7 @@ x[5] := 1.2
 # Initial values
 x[~] <- 1
 k[~] <- ((delt+bet)/(1.0*aa*alph))^(1/(alph-1))
-c[~] <- aa*k[~]^alph-delt*k[~]*x[5]
+c[~] <- aa*k[~]^alph-delt*k[~]
 
 
 # Model block

@@ -27,4 +27,4 @@ w[~] <- (1-alpha)*y[~]/n[~]
 i[~] <- delta*k[~]
 c[~] <- y[~]-i[~]
 
-epsilon[t] <- N(0,0.001)
+epsilon[t] <- N(0,0.103)
