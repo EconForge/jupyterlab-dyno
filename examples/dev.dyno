@@ -1,0 +1,98 @@
+class BHTML:
+
+    def __init__(self, html):
+        self.html = html
+
+    def _repr_html_(self):
+        return self.html
+        
+
+doc = """
+
+
+
+# Here is a title.
+
+Here's some *text*
+```{sidebar} my sidebar
+
+That is the content of the sidebar
+```
+1. a list
+
+> a quote
+
+{emphasis}`content`
+
+
+```{code-block} python
+def func(x:int) -> int:
+
+    out = 0
+    for i in range(x):
+        out += x**2
+    return out 
+```
+
+![](clippy.png)
+
+
+Can I embed formulas : $a=34$ ?
+
+:::{tip}
+Let's give readers a helpful hint!
+:::
+
+
+:::{admonition} My custom title with *Markdown*!
+:class: dropdown
+
+This is a custom title for a tip admonition.
+:::
+
+"""
+
+myst_enable_extensions = [
+    "amsmath",
+    "attrs_inline",
+    "colon_fence",
+    "deflist",
+    "dollarmath",
+    "fieldlist",
+    "html_admonition",
+    "html_image",
+    "replacements",
+    "smartquotes",
+    "strikethrough",
+    "substitution",
+    "tasklist",
+]
+
+from docutils.core import publish_string
+from myst_parser.docutils_ import Parser
+
+output = publish_string(
+    source=doc,
+    writer_name="html5",
+    settings_overrides={
+        "myst_enable_extensions": myst_enable_extensions,
+        "embed_stylesheet": True,
+    },
+    parser=Parser(),
+)
+
+bhtml = output.decode("utf-8")
+#html = bhtml.replace("minimal", "responsive")
+
+#html = BHTML(html)
+
+import re
+
+pattern = re.compile(r"<body\b[^>]*>(.*?)</body>", re.IGNORECASE | re.DOTALL)
+m = pattern.search(bhtml)
+
+html = str(m)
+#html = bhtml
+
+
+#html = bhtml

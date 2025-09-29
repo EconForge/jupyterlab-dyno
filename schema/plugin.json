@@ -1,6 +1,6 @@
 {
   "jupyter.lab.shortcuts": [],
-  "title": "Jupyter DSGE settings",
+  "title": "Jupyter Dyno settings",
   "description": "Settings to use when solving a DSGE model",
   "type": "object",
   "properties": {
@@ -29,11 +29,25 @@
       "description": "Order of differentiation of the model's endogenous and exogenous variables",
       "default": 1
     },
-    "param-deriv-order": {
-      "type": "integer",
-      "title": "Parameter derivation order",
-      "description": "Order of differentiation of the model's parameters",
-      "default": 0
+    "kernel-restart": {
+      "type": "boolean",
+      "title": "Restart Kernel on Solve",
+      "description": "Restart the kernel everytime the model is solved (for development purpose).",
+      "default": false
+    }
+    ,
+    "output_type": {
+      "type": "string",
+      "title": "Output Type",
+      "description": "Type of output to generate (e.g., markdown, html, etc.)",
+      "enum": ["markdown", "html","text"],
+      "default": "markdown"
+    },
+    "check_output": {
+      "type": "boolean",
+      "title": "Debug Output",
+      "description": "Debug: input is printed directly. ",
+      "default": false
     }
   },
   "additionalProperties": false

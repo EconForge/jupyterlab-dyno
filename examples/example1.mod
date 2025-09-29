@@ -32,7 +32,7 @@ alpha = 0.36;
 rho   = 0.95;
 tau   = 0.025;
 beta  = 0.99;
-delta = 0.025;
+delta = 0.02509;
 psi   = 0;
 theta = 2.95;
 
@@ -50,6 +50,7 @@ b = tau*a(-1)+rho*b(-1) + u;
 end;
 
 initval;
+f =0.4;
 y = 1.08068253095672;
 c = 0.80359242014163;
 h = 0.29175631001732;
@@ -63,7 +64,7 @@ end;
 shocks;
 var e; stderr 0.009;
 var u; stderr 0.009;
-var e, u = phi*0.009*0.009;
+var e, u = phi*0.009*0.0090;
 end;
 
 stoch_simul;
