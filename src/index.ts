@@ -81,13 +81,16 @@ export class DynareWidget
     this._sessionContext = new SessionContext({
       sessionManager: servicemanager.sessions,
       specsManager: servicemanager.kernelspecs,
-      name: 'Kernel Output',
+      name: `Dyno-${Math.random().toString(36).substr(2, 9)}`, // Unique name to force new kernel
       kernelPreference: {
-        name: 'xpython'
+        name: 'xpython',
+        canStart: true,
+        shouldStart: true,
+        autoStartDefault: true
       }
     });
     this._sessionContext.startKernel().then(res => {
-      console.log(res);
+      console.log('Started kernel session');
       void this.context.ready.then(() => {
         this.update();
         this._monitor = new ActivityMonitor({
@@ -128,11 +131,7 @@ export class DynareWidget
     // Use the document path to branch behavior by file type
     const path = this.context.path.toLowerCase();
     
-    const isDyno = path.endsWith('.dyno') || path.endsWith('.🦖');
-    const isDynoYAML = path.endsWith('.dyno.yaml');
-    const isMod = path.endsWith('.mod') || path.endsWith('.dynare.mod');
-    // define the engine type (either 'dyno','mod' or 'dynoYAML')
-    const engine = isDyno ? 'dyno' : isDynoYAML ? 'dynoYAML' : isMod ? 'dynare' : 'unknown';
+
     const start = performance.now();
 
     console.log(global_setting);
@@ -142,7 +141,6 @@ import json
 options = json.loads("""${JSON.stringify(global_setting)}""")
 warnings.filterwarnings('ignore')
 from dyno.report import dsge_report
-engine = '${engine}'
 filename = '${path}'
 txt = '''${data}'''
 dsge_report(txt=txt, filename=filename, **options)`;
@@ -154,7 +152,7 @@ dsge_report(txt=txt, filename=filename, **options)`;
       rendermime: this._rendermime
     });
 
-    const prevOutputs = this._safeToJSON(this.content.model);
+    // const prevOutputs = this._safeToJSON(this.content.model);
 
 
     OutputArea.execute(code, tempArea, this._sessionContext)
@@ -162,12 +160,14 @@ dsge_report(txt=txt, filename=filename, **options)`;
         const end = performance.now();
         const nextOutputs = this._safeToJSON(tempModel);
 
-        const kind = isDyno ? 'dyno' : isMod ? 'mod' : 'unknown';
-        console.log(`Took ${end - start} milliseconds to render ${kind} file`);
+        console.log(`Took ${end - start} milliseconds to render file`);
 
-        const same = this._outputsEqual(prevOutputs, nextOutputs);
-        if (!same && nextOutputs) {
-          // Update visible model only if content changed
+        // const same = this._outputsEqual(prevOutputs, nextOutputs);
+        // if (!same && nextOutputs) {
+        //   // Update visible model only if content changed
+        //   this._applyOutputsToVisibleModel(nextOutputs);
+        // }
+        if (nextOutputs) {
           this._applyOutputsToVisibleModel(nextOutputs);
         }
 
@@ -205,9 +205,8 @@ dsge_report(txt=txt, filename=filename, **options)`;
       .catch(reason => {
         const end = performance.now();
         console.error(reason);
-        const kind = isDyno ? 'dyno' : isMod ? 'mod' : 'unknown';
         console.log(
-          `Took ${end - start} milliseconds to show error message for ${kind} file`
+          `Took ${end - start} milliseconds to show error message file`
         );
         // On error, propagate the error outputs to visible model
         const nextOutputs = this._safeToJSON(tempModel);
@@ -243,42 +242,42 @@ dsge_report(txt=txt, filename=filename, **options)`;
    * Normalize outputs to compare equality while ignoring transient fields
    * like execution_count and transient metadata.
    */
-  private _normalizeOutputs(outputs: any[] | null): any[] | null {
-    if (!outputs) {
-      return null;
-    }
-    const normalizeData = (data: any) => {
-      if (!data || typeof data !== 'object') {
-        return data;
-      }
-      const keys = Object.keys(data).sort();
-      const norm: any = {};
-      for (const k of keys) {
-        norm[k] = data[k];
-      }
-      return norm;
-    };
-    return outputs.map(o => {
-      const c: any = { ...o };
-      delete c.execution_count;
-      delete c.transient;
-      if (c.metadata && typeof c.metadata === 'object') {
-        const m = { ...c.metadata };
-        delete (m as any).execution;
-        c.metadata = m;
-      }
-      if (c.data) {
-        c.data = normalizeData(c.data);
-      }
-      return c;
-    });
-  }
+  // private _normalizeOutputs(outputs: any[] | null): any[] | null {
+  //   if (!outputs) {
+  //     return null;
+  //   }
+  //   const normalizeData = (data: any) => {
+  //     if (!data || typeof data !== 'object') {
+  //       return data;
+  //     }
+  //     const keys = Object.keys(data).sort();
+  //     const norm: any = {};
+  //     for (const k of keys) {
+  //       norm[k] = data[k];
+  //     }
+  //     return norm;
+  //   };
+  //   return outputs.map(o => {
+  //     const c: any = { ...o };
+  //     delete c.execution_count;
+  //     delete c.transient;
+  //     if (c.metadata && typeof c.metadata === 'object') {
+  //       const m = { ...c.metadata };
+  //       delete (m as any).execution;
+  //       c.metadata = m;
+  //     }
+  //     if (c.data) {
+  //       c.data = normalizeData(c.data);
+  //     }
+  //     return c;
+  //   });
+  // }
 
-  private _outputsEqual(a: any[] | null, b: any[] | null): boolean {
-    const na = this._normalizeOutputs(a);
-    const nb = this._normalizeOutputs(b);
-    return JSON.stringify(na) === JSON.stringify(nb);
-  }
+  // private _outputsEqual(a: any[] | null, b: any[] | null): boolean {
+  //   const na = this._normalizeOutputs(a);
+  //   const nb = this._normalizeOutputs(b);
+  //   return JSON.stringify(na) === JSON.stringify(nb);
+  // }
 
   /**
    * Apply outputs array to the visible output area model.
@@ -303,8 +302,38 @@ dsge_report(txt=txt, filename=filename, **options)`;
 
   // Dispose of resources held by the widget
   dispose(): void {
+    // Disconnect activity monitor first
+    if (this._monitor) {
+      this._monitor.dispose();
+      this._monitor = null;
+    }
+    
     this.content.dispose();
-    this._sessionContext.dispose();
+    
+    // Aggressively shutdown kernel and session
+    if (this._sessionContext && !this._sessionContext.isDisposed) {
+      const session = this._sessionContext.session;
+      if (session && session.kernel) {
+        console.log('Shutting down kernel:', session.kernel.id);
+        // First try to shutdown the kernel directly
+        session.kernel.shutdown().then(() => {
+          console.log('Kernel shutdown completed');
+        }).catch(err => {
+          console.warn('Error shutting down kernel directly:', err);
+        }).finally(() => {
+          // Then shutdown the session
+          this._sessionContext.shutdown().catch(err => {
+            console.warn('Error shutting down session context:', err);
+          });
+        });
+      } else {
+        // No kernel, just shutdown the session context
+        this._sessionContext.shutdown().catch(err => {
+          console.warn('Error shutting down session context:', err);
+        });
+      }
+    }
+    
     super.dispose();
   }
   private _renderPending = false;
