@@ -32,6 +32,9 @@ import {
   ILayoutRestorer
 } from '@jupyterlab/application';
 
+// Import the GIF image for loading animation
+import dinoGif from '../style/dino_lab_bubbles.gif';
+
 // Default settings, see schema/plugin.json for more details
 let global_setting = {};
 let preserveScrollPosition = true;
@@ -92,6 +95,16 @@ export class DynareWidget
     this._sessionContext.startKernel().then(res => {
       console.log('Started kernel session');
       void this.context.ready.then(() => {
+        // Check if we already have content to avoid showing loading unnecessarily
+        const data = this.context.model.toString();
+        if (data && data.trim() !== '') {
+          // File has content, proceed normally
+          this._isFirstRender = false;
+        } else {
+          // No content yet, show loading for first render
+          this._showInitialLoading();
+        }
+        
         this.update();
         this._monitor = new ActivityMonitor({
           signal: this.context.model.contentChanged,
@@ -103,6 +116,9 @@ export class DynareWidget
     const js = document.createElement('script');
     js.src = PLOTLY_CDN_URL;
     this.content.node.appendChild(js);
+    
+    // Show initial loading content in the output area
+    this._showInitialLoading();
   }
 
   protected onUpdateRequest(): void {
@@ -110,7 +126,67 @@ export class DynareWidget
       return;
     }
     this._renderPending = true;
-    void this._renderModel().then(() => (this._renderPending = false));
+    
+    void this._renderModel().then(() => {
+      this._renderPending = false;
+      this._isFirstRender = false;
+    }).catch(() => {
+      this._renderPending = false;
+      this._isFirstRender = false;
+    });
+  }
+  
+  /**
+   * Show initial loading content in the output area
+   */
+  private _showInitialLoading(): void {
+    console.log('Showing initial loading content');
+    
+    // Create loading HTML content using the dino_lab_bubbles.gif
+    const loadingHtml = `
+      <div style="
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 40px;
+        text-align: center;
+        min-height: 300px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        margin: 20px;
+      ">
+        <div style="
+          width: 200px;
+          height: 200px;
+          background-image: url('${dinoGif}');
+          background-size: contain;
+          background-repeat: no-repeat;
+          background-position: center;
+          border: 2px solid #e9ecef;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          margin-bottom: 20px;
+        "></div>
+        <div style="
+          font-size: 16px;
+          color: #495057;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          font-weight: 500;
+        ">🦖 Starting kernel and processing...</div>
+      </div>
+    `;
+    
+    // Add HTML output to the output area
+    const output = {
+      output_type: 'display_data',
+      data: {
+        'text/html': loadingHtml
+      },
+      metadata: {}
+    };
+    
+    this.content.model.add(output);
   }
 
   /*
@@ -121,6 +197,13 @@ export class DynareWidget
     if (data === '') {
       return; // don't try to render empty documents
     }
+    
+    // Clear the output area if this is the first render (to remove loading content)
+    if (this._isFirstRender) {
+      this.content.model.clear();
+      this._isFirstRender = false;
+    }
+    
     // Preserve scroll position of the output panel across re-renders (if enabled)
     const container = this.content.node;
     const prevScrollTop = preserveScrollPosition ? container.scrollTop : 0;
@@ -221,6 +304,7 @@ dsge_report(txt=txt, filename=filename, **options)`;
             });
           });
         }
+        // Note: loading is now handled in onUpdateRequest
       });
   }
 
@@ -341,6 +425,7 @@ dsge_report(txt=txt, filename=filename, **options)`;
   private _monitor: ActivityMonitor<DocumentRegistry.IModel, void> | null =
     null;
   private _rendermime: IRenderMimeRegistry;
+  private _isFirstRender = true;
 }
 
 /**
