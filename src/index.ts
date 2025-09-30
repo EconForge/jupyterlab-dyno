@@ -92,6 +92,16 @@ export class DynareWidget
     this._sessionContext.startKernel().then(res => {
       console.log('Started kernel session');
       void this.context.ready.then(() => {
+        // Check if we already have content to avoid showing loading unnecessarily
+        const data = this.context.model.toString();
+        if (data && data.trim() !== '') {
+          // File has content, proceed normally
+          this._isFirstRender = false;
+        } else {
+          // No content yet, show loading for first render
+          this._showInitialLoading();
+        }
+        
         this.update();
         this._monitor = new ActivityMonitor({
           signal: this.context.model.contentChanged,
@@ -103,6 +113,9 @@ export class DynareWidget
     const js = document.createElement('script');
     js.src = PLOTLY_CDN_URL;
     this.content.node.appendChild(js);
+    
+    // Show initial loading content in the output area
+    this._showInitialLoading();
   }
 
   protected onUpdateRequest(): void {
@@ -110,7 +123,93 @@ export class DynareWidget
       return;
     }
     this._renderPending = true;
-    void this._renderModel().then(() => (this._renderPending = false));
+    
+    void this._renderModel().then(() => {
+      this._renderPending = false;
+      this._isFirstRender = false;
+    }).catch(() => {
+      this._renderPending = false;
+      this._isFirstRender = false;
+    });
+  }
+  
+  /**
+   * Show initial loading content in the output area
+   */
+  private _showInitialLoading(): void {
+    console.log('Showing initial loading content');
+    
+    // Create loading HTML content with CSS animation fallback
+    const loadingHtml = `
+      <style>
+        .dino-loader {
+          animation: bounce 1.5s infinite;
+          transform-origin: center bottom;
+        }
+        @keyframes bounce {
+          0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-30px); }
+          60% { transform: translateY(-15px); }
+        }
+        .loading-spinner {
+          border: 4px solid #f3f3f3;
+          border-top: 4px solid #3498db;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          animation: spin 2s linear infinite;
+          margin: 20px auto;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      </style>
+      <div style="
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 300px;
+        padding: 40px;
+        text-align: center;
+        background-color: rgba(255, 255, 255, 0.95);
+      ">
+        <div style="
+          width: 200px;
+          height: 200px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          border: 2px solid #f0f0f0;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        ">
+          <div class="dino-loader" style="font-size: 64px; margin-bottom: 10px;">🦖</div>
+          <div class="loading-spinner"></div>
+        </div>
+        <div style="
+          margin-top: 16px;
+          font-size: 16px;
+          color: #333;
+          font-family: var(--jp-ui-font-family);
+          font-weight: 500;
+        ">🦖 Starting kernel and processing...</div>
+      </div>
+    `;
+    
+    // Add HTML output to the output area
+    const output = {
+      output_type: 'display_data',
+      data: {
+        'text/html': loadingHtml
+      },
+      metadata: {}
+    };
+    
+    this.content.model.add(output);
   }
 
   /*
@@ -121,6 +220,13 @@ export class DynareWidget
     if (data === '') {
       return; // don't try to render empty documents
     }
+    
+    // Clear the output area if this is the first render (to remove loading content)
+    if (this._isFirstRender) {
+      this.content.model.clear();
+      this._isFirstRender = false;
+    }
+    
     // Preserve scroll position of the output panel across re-renders (if enabled)
     const container = this.content.node;
     const prevScrollTop = preserveScrollPosition ? container.scrollTop : 0;
@@ -221,6 +327,7 @@ dsge_report(txt=txt, filename=filename, **options)`;
             });
           });
         }
+        // Note: loading is now handled in onUpdateRequest
       });
   }
 
@@ -341,6 +448,7 @@ dsge_report(txt=txt, filename=filename, **options)`;
   private _monitor: ActivityMonitor<DocumentRegistry.IModel, void> | null =
     null;
   private _rendermime: IRenderMimeRegistry;
+  private _isFirstRender = true;
 }
 
 /**
