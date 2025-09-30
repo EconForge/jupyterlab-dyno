@@ -32,6 +32,9 @@ import {
   ILayoutRestorer
 } from '@jupyterlab/application';
 
+// Import the GIF image for loading animation
+import dinoGif from '../style/dino_lab_bubbles.gif';
+
 // Default settings, see schema/plugin.json for more details
 let global_setting = {};
 let preserveScrollPosition = true;
@@ -139,62 +142,36 @@ export class DynareWidget
   private _showInitialLoading(): void {
     console.log('Showing initial loading content');
     
-    // Create loading HTML content with CSS animation fallback
+    // Create loading HTML content using the dino_lab_bubbles.gif
     const loadingHtml = `
-      <style>
-        .dino-loader {
-          animation: bounce 1.5s infinite;
-          transform-origin: center bottom;
-        }
-        @keyframes bounce {
-          0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-          40% { transform: translateY(-30px); }
-          60% { transform: translateY(-15px); }
-        }
-        .loading-spinner {
-          border: 4px solid #f3f3f3;
-          border-top: 4px solid #3498db;
-          border-radius: 50%;
-          width: 40px;
-          height: 40px;
-          animation: spin 2s linear infinite;
-          margin: 20px auto;
-        }
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      </style>
       <div style="
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        min-height: 300px;
         padding: 40px;
         text-align: center;
-        background-color: rgba(255, 255, 255, 0.95);
+        min-height: 300px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        margin: 20px;
       ">
         <div style="
           width: 200px;
           height: 200px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          border: 2px solid #f0f0f0;
+          background-image: url('${dinoGif}');
+          background-size: contain;
+          background-repeat: no-repeat;
+          background-position: center;
+          border: 2px solid #e9ecef;
           border-radius: 8px;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        ">
-          <div class="dino-loader" style="font-size: 64px; margin-bottom: 10px;">🦖</div>
-          <div class="loading-spinner"></div>
-        </div>
+          margin-bottom: 20px;
+        "></div>
         <div style="
-          margin-top: 16px;
           font-size: 16px;
-          color: #333;
-          font-family: var(--jp-ui-font-family);
+          color: #495057;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           font-weight: 500;
         ">🦖 Starting kernel and processing...</div>
       </div>
