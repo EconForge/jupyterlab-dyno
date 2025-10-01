@@ -32,9 +32,6 @@ import {
   ILayoutRestorer
 } from '@jupyterlab/application';
 
-// Import the GIF image for loading animation
-import dinoGif from '../style/dino_lab_bubbles.gif';
-
 // Default settings, see schema/plugin.json for more details
 let global_setting = {};
 let preserveScrollPosition = true;
@@ -100,12 +97,12 @@ export class DynareWidget
         if (data && data.trim() !== '') {
           // File has content, proceed normally
           this._isFirstRender = false;
+          this.update();
         } else {
           // No content yet, show loading for first render
           this._showInitialLoading();
         }
         
-        this.update();
         this._monitor = new ActivityMonitor({
           signal: this.context.model.contentChanged,
           timeout: RENDER_TIMEOUT
@@ -142,9 +139,9 @@ export class DynareWidget
   private _showInitialLoading(): void {
     console.log('Showing initial loading content');
     
-    // Create loading HTML content using the dino_lab_bubbles.gif
+    // Create loading HTML content that works within the output area
     const loadingHtml = `
-      <div style="
+      <div class="jp-DynareWidget-loading-container" style="
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -152,28 +149,13 @@ export class DynareWidget
         padding: 40px;
         text-align: center;
         min-height: 300px;
-        background-color: #f8f9fa;
+        background-color: rgba(248, 249, 250, 0.95);
         border-radius: 8px;
         margin: 20px;
+        border: 1px solid #e9ecef;
       ">
-        <div style="
-          width: 200px;
-          height: 200px;
-          background-image: url('${dinoGif}');
-          background-size: contain;
-          background-repeat: no-repeat;
-          background-position: center;
-          border: 2px solid #e9ecef;
-          border-radius: 8px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-          margin-bottom: 20px;
-        "></div>
-        <div style="
-          font-size: 16px;
-          color: #495057;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          font-weight: 500;
-        ">🦖 Starting kernel and processing...</div>
+        <div class="jp-DynareWidget-loading-image"></div>
+        <div class="jp-DynareWidget-loading-text">🦖 Starting kernel and processing...</div>
       </div>
     `;
     
@@ -186,7 +168,10 @@ export class DynareWidget
       metadata: {}
     };
     
+    // Clear any existing content first and add loading content
+    this.content.model.clear();
     this.content.model.add(output);
+    console.log('Loading content added to output area');
   }
 
   /*
