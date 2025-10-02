@@ -48,6 +48,83 @@
   text-align: center;
 }
 
+/* Line highlighting styles */
+.jp-dyno-highlighted-line {
+  background-color: rgba(255, 235, 59, 0.3) !important; /* Light yellow highlight */
+  border-left: 3px solid #ffc107 !important; /* Golden left border */
+  transition: background-color 0.2s ease-in-out;
+}
+
+.jp-dyno-highlighted-line:hover {
+  background-color: rgba(255, 235, 59, 0.4) !important; /* Slightly more opaque on hover */
+}
+
+/* Alternative highlight styles for different types of highlighting */
+.jp-dyno-error-line {
+  background-color: rgba(244, 67, 54, 0.1) !important; /* Light red for errors */
+  border-left: 3px solid #f44336 !important;
+}
+
+.jp-dyno-warning-line {
+  background-color: rgba(255, 152, 0, 0.1) !important; /* Light orange for warnings */
+  border-left: 3px solid #ff9800 !important;
+}
+
+.jp-dyno-success-line {
+  background-color: rgba(76, 175, 80, 0.1) !important; /* Light green for success */
+  border-left: 3px solid #4caf50 !important;
+}
+
+/* Ensure highlighting works with CodeMirror 6 line elements */
+.cm-line.jp-dyno-highlighted-line,
+.CodeMirror-line.jp-dyno-highlighted-line {
+  background-color: rgba(255, 235, 59, 0.3) !important;
+  border-left: 3px solid #ffc107 !important;
+}
+
+.cm-line.jp-dyno-error-line,
+.CodeMirror-line.jp-dyno-error-line {
+  background-color: rgba(244, 67, 54, 0.1) !important;
+  border-left: 3px solid #f44336 !important;
+}
+
+.cm-line.jp-dyno-warning-line,
+.CodeMirror-line.jp-dyno-warning-line {
+  background-color: rgba(255, 152, 0, 0.1) !important;
+  border-left: 3px solid #ff9800 !important;
+}
+
+.cm-line.jp-dyno-success-line,
+.CodeMirror-line.jp-dyno-success-line {
+  background-color: rgba(76, 175, 80, 0.1) !important;
+  border-left: 3px solid #4caf50 !important;
+}
+
+/* Ensure highlighting persists during selection and focus */
+.cm-focused .cm-line.jp-dyno-highlighted-line,
+.CodeMirror-focused .CodeMirror-line.jp-dyno-highlighted-line {
+  background-color: rgba(255, 235, 59, 0.3) !important;
+  border-left: 3px solid #ffc107 !important;
+}
+
+.cm-focused .cm-line.jp-dyno-error-line,
+.CodeMirror-focused .CodeMirror-line.jp-dyno-error-line {
+  background-color: rgba(244, 67, 54, 0.1) !important;
+  border-left: 3px solid #f44336 !important;
+}
+
+.cm-focused .cm-line.jp-dyno-warning-line,
+.CodeMirror-focused .CodeMirror-line.jp-dyno-warning-line {
+  background-color: rgba(255, 152, 0, 0.1) !important;
+  border-left: 3px solid #ff9800 !important;
+}
+
+.cm-focused .cm-line.jp-dyno-success-line,
+.CodeMirror-focused .CodeMirror-line.jp-dyno-success-line {
+  background-color: rgba(76, 175, 80, 0.1) !important;
+  border-left: 3px solid #4caf50 !important;
+}
+
 /* Make sure the widget container is positioned relative for absolute positioning */
 .jupyterlab-dyno {
   position: relative;
