@@ -35,7 +35,6 @@ import {
 } from '@jupyterlab/application';
 
 import { dyno, mod } from './languages/dyno-language';
-import { startSyntaxHighlightingMonitor } from './languages/simple-syntax';
 
 // Default settings, see schema/plugin.json for more details
 let global_setting = {};
@@ -1469,9 +1468,6 @@ const plugin: JupyterFrontEndPlugin<IWidgetTracker<DynareWidget>> = {
     editorLanguages: IEditorLanguageRegistry
   ): IWidgetTracker<DynareWidget> => {
     console.log('JupyterLab extension jupyterlab-dyno is activated!');
-    
-    // Start the simple syntax highlighting monitor as a fallback
-    startSyntaxHighlightingMonitor();
     
     // Register syntax highlighting for our custom languages with JupyterLab's editor system
     console.log('Registering DYNO and MOD language modes with editor language registry...');

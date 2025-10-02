@@ -177,6 +177,18 @@
   font-weight: bold;
 }
 
+/* Time subscripts (t, t+1, t-1, ~, (+1), (-1)) */
+.cm-editor .cm-line .cm-time-subscript {
+  color: #ff6b6b;
+  font-weight: bold;
+}
+
+/* Brackets (inherit variable color) */
+.cm-editor .cm-line .cm-bracket {
+  color: #9cdcfe;
+  font-weight: normal;
+}
+
 /* Meta (section headers) */
 .cm-editor .cm-line .cm-meta {
   color: #c586c0;
@@ -219,6 +231,16 @@
 
 [data-jp-theme-light] .cm-editor .cm-line .cm-atom {
   color: #0451a5;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-time-subscript {
+  color: #d63384;
+  font-weight: bold;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-bracket {
+  color: #001080;
+  font-weight: normal;
 }
 
 [data-jp-theme-light] .cm-editor .cm-line .cm-meta {
