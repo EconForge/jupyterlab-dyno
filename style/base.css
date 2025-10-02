@@ -130,3 +130,97 @@
   position: relative;
   min-height: 200px;
 }
+
+/* Syntax highlighting styles for DYNO and MOD languages */
+
+/* Comments */
+.cm-editor .cm-line .cm-comment {
+  color: #6a9955;
+  font-style: italic;
+}
+
+/* Keywords (var, model, end, etc.) */
+.cm-editor .cm-line .cm-keyword {
+  color: #569cd6;
+  font-weight: bold;
+}
+
+/* Built-in functions (log, exp, etc.) */
+.cm-editor .cm-line .cm-builtin {
+  color: #4ec9b0;
+  font-weight: 500;
+}
+
+/* Numbers */
+.cm-editor .cm-line .cm-number {
+  color: #b5cea8;
+}
+
+/* Variables */
+.cm-editor .cm-line .cm-variable {
+  color: #9cdcfe;
+}
+
+/* Secondary variables (user-defined) */
+.cm-editor .cm-line .cm-variable-2 {
+  color: #dcdcaa;
+}
+
+/* Operators */
+.cm-editor .cm-line .cm-operator {
+  color: #d4d4d4;
+}
+
+/* Special atoms (time subscripts [t], [t+1], etc.) */
+.cm-editor .cm-line .cm-atom {
+  color: #ffd700;
+  font-weight: bold;
+}
+
+/* Meta (section headers) */
+.cm-editor .cm-line .cm-meta {
+  color: #c586c0;
+  font-weight: bold;
+}
+
+/* Punctuation */
+.cm-editor .cm-line .cm-punctuation {
+  color: #cccccc;
+}
+
+/* Light theme syntax highlighting */
+[data-jp-theme-light] .cm-editor .cm-line .cm-comment {
+  color: #008000;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-keyword {
+  color: #0000ff;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-builtin {
+  color: #795e26;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-number {
+  color: #098658;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-variable {
+  color: #001080;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-variable-2 {
+  color: #795e26;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-operator {
+  color: #000000;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-atom {
+  color: #0451a5;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-meta {
+  color: #800080;
+}

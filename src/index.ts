@@ -12,6 +12,8 @@ import { IWidgetTracker, WidgetTracker } from '@jupyterlab/apputils';
 
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
+import { IEditorLanguageRegistry } from '@jupyterlab/codemirror';
+
 import { Token } from '@lumino/coreutils';
 
 import { SessionContext } from '@jupyterlab/apputils';
@@ -31,6 +33,9 @@ import {
   JupyterFrontEndPlugin,
   ILayoutRestorer
 } from '@jupyterlab/application';
+
+import { dyno, mod } from './languages/dyno-language';
+import { startSyntaxHighlightingMonitor } from './languages/simple-syntax';
 
 // Default settings, see schema/plugin.json for more details
 let global_setting = {};
@@ -907,13 +912,289 @@ dsge_report(txt=txt, filename=filename, **options)`;
     console.log('[DEBUG] setEditorWidget called with:', editorWidget);
     this._editorWidget = editorWidget;
     
+    // Set the correct MIME type for the editor immediately
+    this._setEditorMimeType();
+    
     // Wait for the editor to be fully loaded
     this._waitForEditorReady().then(() => {
       console.log('[DEBUG] Editor is ready for highlighting');
+      
+      // Apply syntax highlighting
+      this._applySyntaxHighlighting();
+      
       // Don't automatically test highlighting - let it be triggered by actual data
     }).catch(error => {
       console.warn('[DEBUG] Error waiting for editor ready:', error);
     });
+  }
+
+  /**
+   * Force set the language mode via JupyterLab's language registry
+   */
+  private _forceLanguageMode(filePath: string): void {
+    console.log('[DEBUG] Forcing language mode for:', filePath);
+    
+    try {
+      const editor = this._editorWidget.content.editor;
+      let languageName = '';
+      
+      if (filePath.endsWith('.dyno') || filePath.endsWith('.🦖') || filePath.endsWith('.dyno.yaml')) {
+        languageName = 'dyno';
+      } else if (filePath.endsWith('.mod') || filePath.endsWith('.dynare.mod')) {
+        languageName = 'mod';
+      }
+      
+      if (languageName) {
+        // Try to get the editor's language support and force set it
+        const editorView = (editor as any).editor;
+        if (editorView && editorView.state) {
+          console.log('[DEBUG] Attempting to force language mode:', languageName);
+          
+          // Check if the language is already applied
+          const currentLang = editorView.state.facet ? 'has facets' : 'no facets';
+          console.log('[DEBUG] Current editor language state:', currentLang);
+          
+          // Try to get language from global registry
+          if ((window as any).jupyterlab) {
+            const app = (window as any).jupyterlab;
+            if (app.serviceManager && app.serviceManager.language) {
+              console.log('[DEBUG] Found language service, attempting to set language');
+              // This would be the ideal way but may not be available
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('[DEBUG] Failed to force language mode:', error);
+    }
+  }
+
+  /**
+   * Set the correct MIME type for the editor based on file extension
+   */
+  private _setEditorMimeType(): void {
+    if (!this._editorWidget || !this._editorWidget.content || !this._editorWidget.content.editor) {
+      return;
+    }
+
+    const filePath = this._editorWidget.context?.path || '';
+    let mimeType = '';
+
+    console.log('[DEBUG] Setting MIME type for file:', filePath);
+
+    if (filePath.endsWith('.dyno') || filePath.endsWith('.🦖') || filePath.endsWith('.dyno.yaml')) {
+      mimeType = 'text/x-dyno';
+    } else if (filePath.endsWith('.mod') || filePath.endsWith('.dynare.mod')) {
+      mimeType = 'text/x-mod';
+    }
+
+    if (mimeType) {
+      try {
+        const editor = this._editorWidget.content.editor;
+        console.log('[DEBUG] Setting editor MIME type to:', mimeType);
+        
+        // For JupyterLab 4.x, try to set the mode directly
+        if ((editor as any).setOption) {
+          (editor as any).setOption('mode', mimeType);
+        } else if ((editor as any).model && (editor as any).model.mimeType) {
+          (editor as any).model.mimeType = mimeType;
+        }
+        
+        // Also try to set it via the document model
+        if (this._editorWidget.context && this._editorWidget.context.model) {
+          (this._editorWidget.context.model as any).mimeType = mimeType;
+        }
+        
+        console.log('[DEBUG] Editor MIME type set successfully');
+      } catch (error) {
+        console.warn('[DEBUG] Failed to set editor MIME type:', error);
+      }
+    }
+  }
+
+  /**
+   * Apply syntax highlighting to the editor
+   */
+  private _applySyntaxHighlighting(): void {
+    if (!this._editorWidget || !this._editorWidget.content || !this._editorWidget.content.editor) {
+      console.warn('[DEBUG] No editor available for syntax highlighting');
+      return;
+    }
+
+    try {
+      const editor = this._editorWidget.content.editor;
+      const filePath = this._editorWidget.context?.path || '';
+      
+      console.log('[DEBUG] Applying syntax highlighting for file:', filePath);
+      
+      // First, try to force set the language via JupyterLab's language registry
+      this._forceLanguageMode(filePath);
+      
+      // Determine which language mode to use based on file extension
+      let languageMode = null;
+      if (filePath.endsWith('.dyno') || filePath.endsWith('.🦖') || filePath.endsWith('.dyno.yaml')) {
+        languageMode = dyno();
+        console.log('[DEBUG] Using DYNO language mode');
+      } else if (filePath.endsWith('.mod') || filePath.endsWith('.dynare.mod')) {
+        languageMode = mod();
+        console.log('[DEBUG] Using MOD language mode');
+      }
+      
+      if (languageMode) {
+        // Try multiple approaches to apply the language mode
+        const editorView = (editor as any).editor;
+        console.log('[DEBUG] Editor view:', editorView);
+        
+        if (editorView && editorView.state && editorView.dispatch) {
+          console.log('[DEBUG] Attempting to apply language mode via CodeMirror 6 API');
+          
+          try {
+            // Approach 1: Try direct language reconfiguration
+            import('@codemirror/state').then(({ Compartment, StateEffect }) => {
+              console.log('[DEBUG] Loaded CodeMirror state module');
+              
+              if (!this._languageCompartment) {
+                this._languageCompartment = new Compartment();
+                
+                // Apply initial configuration
+                const transaction = editorView.state.update({
+                  effects: this._languageCompartment.reconfigure(languageMode)
+                });
+                editorView.dispatch(transaction);
+                console.log('[DEBUG] Language mode applied with new compartment');
+              } else {
+                // Reconfigure existing
+                const transaction = editorView.state.update({
+                  effects: this._languageCompartment.reconfigure(languageMode)
+                });
+                editorView.dispatch(transaction);
+                console.log('[DEBUG] Language mode reconfigured');
+              }
+            }).catch(error => {
+              console.error('[DEBUG] Error with Compartment approach:', error);
+              
+              // Approach 2: Try extension approach
+              try {
+                const newExtensions = [languageMode];
+                const transaction = editorView.state.update({
+                  effects: { reconfigure: newExtensions }
+                });
+                editorView.dispatch(transaction);
+                console.log('[DEBUG] Language mode applied via extension reconfiguration');
+              } catch (extError) {
+                console.error('[DEBUG] Extension approach failed:', extError);
+                
+                // Approach 3: Try replacing the entire configuration
+                this._tryAdvancedLanguageApplication(editorView, languageMode, filePath);
+              }
+            });
+          } catch (mainError) {
+            console.error('[DEBUG] Main language application failed:', mainError);
+            this._tryAdvancedLanguageApplication(editorView, languageMode, filePath);
+          }
+        } else {
+          console.warn('[DEBUG] Could not access CodeMirror editor view');
+          this._trySimpleSyntaxHighlighting(filePath);
+        }
+      } else {
+        console.log('[DEBUG] No language mode needed for file:', filePath);
+      }
+    } catch (error) {
+      console.error('[DEBUG] Error applying syntax highlighting:', error);
+    }
+  }
+
+  /**
+   * Try advanced language application techniques
+   */
+  private _tryAdvancedLanguageApplication(editorView: any, languageMode: any, filePath: string): void {
+    console.log('[DEBUG] Trying advanced language application');
+    
+    try {
+      // Try getting the current document and creating a new state
+      const currentDoc = editorView.state.doc;
+      
+      import('@codemirror/state').then(({ EditorState }) => {
+        const newState = EditorState.create({
+          doc: currentDoc,
+          extensions: [languageMode]
+        });
+        
+        // Replace the entire state
+        editorView.setState(newState);
+        console.log('[DEBUG] Applied language mode by replacing editor state');
+      }).catch(error => {
+        console.error('[DEBUG] Advanced application failed:', error);
+        this._trySimpleSyntaxHighlighting(filePath);
+      });
+    } catch (error) {
+      console.error('[DEBUG] Advanced language application error:', error);
+      this._trySimpleSyntaxHighlighting(filePath);
+    }
+  }
+
+  /**
+   * Fallback to simple CSS-based syntax highlighting
+   */
+  private _trySimpleSyntaxHighlighting(filePath: string): void {
+    console.log('[DEBUG] Falling back to simple syntax highlighting for:', filePath);
+    
+    setTimeout(() => {
+      try {
+        const editorElement = this._editorWidget?.content?.node;
+        if (editorElement) {
+          const lines = editorElement.querySelectorAll('.cm-line, .CodeMirror-line');
+          console.log(`[DEBUG] Found ${lines.length} lines for CSS highlighting`);
+          
+          // Apply simple regex-based highlighting
+          lines.forEach((line: Element, index: number) => {
+            const htmlLine = line as HTMLElement;
+            let content = htmlLine.textContent || '';
+            
+            if (content.trim()) {
+              // Apply basic highlighting patterns
+              if (filePath.endsWith('.dyno') || filePath.endsWith('.🦖') || filePath.endsWith('.dyno.yaml')) {
+                content = this._applyDynoHighlighting(content);
+              } else if (filePath.endsWith('.mod') || filePath.endsWith('.dynare.mod')) {
+                content = this._applyModHighlighting(content);
+              }
+              
+              if (content !== htmlLine.textContent) {
+                htmlLine.innerHTML = content;
+                console.log(`[DEBUG] Applied CSS highlighting to line ${index + 1}`);
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.error('[DEBUG] Simple syntax highlighting failed:', error);
+      }
+    }, 500);
+  }
+
+  /**
+   * Apply DYNO-specific highlighting patterns
+   */
+  private _applyDynoHighlighting(content: string): string {
+    return content
+      .replace(/\b(var|varexo|parameters|model|steady_state_model|shocks|end)\b/g, '<span class="cm-keyword">$1</span>')
+      .replace(/\b(log|exp|sin|cos|tan|sqrt|abs|max|min)\b/g, '<span class="cm-builtin">$1</span>')
+      .replace(/#.*$/gm, '<span class="cm-comment">$&</span>')
+      .replace(/\b\d*\.?\d+([eE][+-]?\d+)?\b/g, '<span class="cm-number">$&</span>')
+      .replace(/<-/g, '<span class="cm-operator">$&</span>');
+  }
+
+  /**
+   * Apply MOD-specific highlighting patterns
+   */
+  private _applyModHighlighting(content: string): string {
+    return content
+      .replace(/\b(var|varexo|parameters|model|end|initval|steady|stoch_simul)\b/g, '<span class="cm-keyword">$1</span>')
+      .replace(/\b(log|exp|sin|cos|tan|sqrt|abs|max|min)\b/g, '<span class="cm-builtin">$1</span>')
+      .replace(/\/\/.*$/gm, '<span class="cm-comment">$&</span>')
+      .replace(/\/\*[\s\S]*?\*\//g, '<span class="cm-comment">$&</span>')
+      .replace(/\b\d*\.?\d+([eE][+-]?\d+)?\b/g, '<span class="cm-number">$&</span>')
+      .replace(/=/g, '<span class="cm-operator">$&</span>');
   }
 
   /**
@@ -1118,6 +1399,7 @@ dsge_report(txt=txt, filename=filename, **options)`;
   private _editorWidget: any = null; // Reference to the associated editor widget
   private _highlightMarks: any[] = []; // Store highlight marks for cleanup
   private _persistentHighlights: Map<number, string> = new Map(); // Store persistent highlight info
+  private _languageCompartment: any = null; // CodeMirror language compartment
 }
 
 /**
@@ -1172,18 +1454,64 @@ const FACTORY = 'Dyno extension';
 /**
  * Initialization data for the jupyterlab-dyno extension.
  */
-const plugin: JupyterFrontEndPlugin<void> = {
+const plugin: JupyterFrontEndPlugin<IWidgetTracker<DynareWidget>> = {
   id: PLUGIN_ID,
   description: 'A JupyterLab extension for solving DSGE models',
   autoStart: true,
-  requires: [ILayoutRestorer, IRenderMimeRegistry, ISettingRegistry],
+  provides: IDynareTracker,
+  requires: [ILayoutRestorer, IRenderMimeRegistry, ISettingRegistry, IEditorLanguageRegistry],
+  optional: [],
   activate: (
     app: JupyterFrontEnd,
     restorer: ILayoutRestorer,
     rendermime: IRenderMimeRegistry,
-    settings: ISettingRegistry
-  ) => {
+    settings: ISettingRegistry,
+    editorLanguages: IEditorLanguageRegistry
+  ): IWidgetTracker<DynareWidget> => {
     console.log('JupyterLab extension jupyterlab-dyno is activated!');
+    
+    // Start the simple syntax highlighting monitor as a fallback
+    startSyntaxHighlightingMonitor();
+    
+    // Register syntax highlighting for our custom languages with JupyterLab's editor system
+    console.log('Registering DYNO and MOD language modes with editor language registry...');
+    
+    try {
+      // Register DYNO language mode
+      editorLanguages.addLanguage({
+        name: 'dyno',
+        mime: 'text/x-dyno',
+        load: async () => {
+          console.log('[DEBUG] Loading DYNO language mode');
+          return dyno();
+        }
+      });
+
+      // Register MOD language mode  
+      editorLanguages.addLanguage({
+        name: 'mod',
+        mime: 'text/x-mod',
+        load: async () => {
+          console.log('[DEBUG] Loading MOD language mode');
+          return mod();
+        }
+      });
+
+      // Also register for the existing MIME type used by the extension
+      editorLanguages.addLanguage({
+        name: 'dyno-alt',
+        mime: 'text/mod', // This is your existing MIME type
+        load: async () => {
+          console.log('[DEBUG] Loading DYNO language mode for text/mod MIME type');
+          return dyno();
+        }
+      });
+      
+      console.log('Language modes registered successfully');
+    } catch (error) {
+      console.error('Error registering language modes:', error);
+    }
+    
     const { commands, shell } = app;
     // Tracker
     const namespace = 'jupyterlab-dyno';
@@ -1279,7 +1607,10 @@ const plugin: JupyterFrontEndPlugin<void> = {
         global_setting = setting.composite as any;
         preserveScrollPosition = (setting.get('preserve-scroll-position')
           .composite as boolean) ?? true;
-        console.log(global_setting);
+        console.log('Settings loaded:', { 
+          preserveScrollPosition, 
+          global_setting 
+        });
       }
 
       /**
@@ -1297,14 +1628,14 @@ const plugin: JupyterFrontEndPlugin<void> = {
     // Register widget and model factories
     app.docRegistry.addWidgetFactory(widgetFactory);
 
-    // Register file type
+    // Register file types with proper MIME types for syntax highlighting
     app.docRegistry.addFileType({
       name: 'mod',
       displayName: 'Mod',
       extensions: ['.mod', '.dynare.mod'],
       fileFormat: 'text',
       contentType: 'file',
-      mimeTypes: [MIME_TYPE]
+      mimeTypes: ['text/x-mod', MIME_TYPE]
     });
     app.docRegistry.addFileType({
       name: 'dyno',
@@ -1312,7 +1643,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
       extensions: ['.dyno', '.🦖'],
       fileFormat: 'text',
       contentType: 'file',
-      mimeTypes: [MIME_TYPE]
+      mimeTypes: ['text/x-dyno', MIME_TYPE]
     });
     app.docRegistry.addFileType({
       name: 'dynoYAML',
@@ -1320,8 +1651,10 @@ const plugin: JupyterFrontEndPlugin<void> = {
       extensions: ['.dyno.yaml'],
         fileFormat: 'text',
         contentType: 'file',
-        mimeTypes: [MIME_TYPE]
+        mimeTypes: ['text/x-dyno', MIME_TYPE]
     });
+    
+    return tracker;
   }    
 };
 
