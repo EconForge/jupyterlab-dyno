@@ -48,6 +48,20 @@ pixi run watch
 This runs `jlpm watch` and `jupyter lab` in parallel.
 Every saved change will be rebuilt automatically — just refresh JupyterLab to load it.
 
+### Dyno Options Sidebar
+
+Opening a supported model file (e.g. a `.mod` or `.dyno` file) now also exposes a sidebar panel named "Dyno Options" on the left side of JupyterLab.
+
+Use it to tweak per-file run parameters without editing global settings:
+
+- Order: numerical order (default 1)
+- Steady state only: if checked, only the steady state is computed
+- Preserve scroll: toggle preservation of the output panel scroll position across re-renders for the current file
+
+Changing any option automatically re-renders the currently active Dyno view. Each file remembers its own option set for the session; switching between open model files updates the panel to reflect that file's stored values.
+
+These per-file options are merged on top of the extension's global settings (defined in `Settings -> Advanced Settings Editor -> Dyno Lab`).
+
 ### Important files
 
 - `pixi.toml` contains the development environment dependencies and scripts

@@ -31,10 +31,14 @@ import {
   JupyterFrontEndPlugin,
   ILayoutRestorer
 } from '@jupyterlab/application';
+import { DynoOptionsPanel, IDynoFileOptions } from './sidebar';
+import { ToolbarButton } from '@jupyterlab/apputils';
 
 // Default settings, see schema/plugin.json for more details
 let global_setting = {};
 let preserveScrollPosition = true;
+// Exported registry for per-file options (populated in activate)
+const dynoFileOptionsRegistry: Map<string, any> = new Map();
 
 /**
  * The default mime type for the extension.
@@ -142,7 +146,7 @@ export class DynareWidget
     // Create loading HTML content that works within the output area
     const loadingHtml = `
       <div class="jp-DynareWidget-loading-container" style="
-        display: flex;
+        display: flex;P
         flex-direction: column;
         justify-content: center;
         align-items: center;
@@ -202,11 +206,14 @@ export class DynareWidget
 
     const start = performance.now();
 
-    console.log(global_setting);
+  console.log(global_setting);
+  // Merge global settings with per-file options if any
+  const perFile = dynoFileOptionsRegistry.get(this.context.path) || {};
+  const merged = { ...global_setting, ...perFile };
     // Choose kernel code based on file type
-    const code = `import warnings
+  const code = `import warnings
 import json
-options = json.loads("""${JSON.stringify(global_setting)}""")
+options = json.loads("""${JSON.stringify(merged)}""")
 warnings.filterwarnings('ignore')
 from dyno.report import dsge_report
 filename = '${path}'
@@ -482,6 +489,20 @@ const plugin: JupyterFrontEndPlugin<void> = {
     const namespace = 'jupyterlab-dyno';
     const tracker = new WidgetTracker<DynareWidget>({ namespace });
     const servicemanager = app.serviceManager;
+    // Sidebar panel for per-file options
+  const optionsPanel = new DynoOptionsPanel();
+  // Map path -> options (reuse global registry for render access)
+  const fileOptions = dynoFileOptionsRegistry as Map<string, IDynoFileOptions>;
+  // Place options panel on the right side instead of left
+  shell.add(optionsPanel, 'right', { rank: 800 });
+    optionsPanel.changed.connect((sender, opts) => {
+      const current = tracker.currentWidget;
+      if (current) {
+        fileOptions.set(current.context.path, opts);
+        // Trigger rerender with new options
+        current.update();
+      }
+    });
     // Track split state
     let splitDone = false;
     let leftEditorRefId: string | null = null;
@@ -517,6 +538,41 @@ const plugin: JupyterFrontEndPlugin<void> = {
         tracker.save(widget);
       });
       tracker.add(widget);
+      // Add toolbar buttons
+      const rerunButton = new ToolbarButton({
+        label: 'Re-run',
+        tooltip: 'Re-run Dyno Report',
+        onClick: () => {
+          widget.update();
+        }
+      });
+      const clearButton = new ToolbarButton({
+        label: 'Clear',
+        tooltip: 'Clear output',
+        onClick: () => {
+          widget.content.model.clear();
+        }
+      });
+      const optionsButton = new ToolbarButton({
+        label: 'Options',
+        tooltip: 'Reveal Dyno Options sidebar',
+        onClick: () => {
+          // Activate or add to right area
+          const area = app.shell;
+          area.activateById(optionsPanel.id);
+        }
+      });
+      widget.toolbar.insertItem(0, 'rerun', rerunButton);
+      widget.toolbar.insertItem(1, 'clear', clearButton);
+      widget.toolbar.insertItem(2, 'options', optionsButton);
+      // When switching current widget update panel values
+      tracker.currentChanged.connect(() => {
+        const current = tracker.currentWidget;
+        if (current) {
+          const opts = fileOptions.get(current.context.path);
+          optionsPanel.setOptions(opts);
+        }
+      });
 
       // Reset split state when all widgets are closed
       widget.disposed.connect(() => {
