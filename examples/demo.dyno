@@ -2,9 +2,9 @@
 beta  <- 0.98
 delta <- 0.025
 nss <- 0.33
-eta <- 1.3
+eta <- 1.
 rho <- 0.5
-alpha <- .33
+alpha <- .37
 khi <- (1-alpha)*(1-nss)^eta/nss*(1/beta-1+delta)/(1/beta-1+delta-delta*alpha)
 
 # equations

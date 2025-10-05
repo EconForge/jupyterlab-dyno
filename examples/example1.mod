@@ -35,7 +35,6 @@ beta  = 0.99;
 delta = 0.02509;
 psi   = 0;
 theta = 2.95;
-
 phi   = 0.1;
 
 model;

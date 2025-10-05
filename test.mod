@@ -2,7 +2,7 @@ var y, c, k, a, h, b;
 varexo e, u;
 
 parameters beta, rho, alpha, delta, theta, psi, tau;
-
+ 
 alpha = 0.36;
 rho   = 0.95;
 tau   = 0.025;

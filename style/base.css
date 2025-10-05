@@ -48,8 +48,201 @@
   text-align: center;
 }
 
+/* Line highlighting styles */
+.jp-dyno-highlighted-line {
+  background-color: rgba(255, 235, 59, 0.3) !important; /* Light yellow highlight */
+  border-left: 3px solid #ffc107 !important; /* Golden left border */
+  transition: background-color 0.2s ease-in-out;
+}
+
+.jp-dyno-highlighted-line:hover {
+  background-color: rgba(255, 235, 59, 0.4) !important; /* Slightly more opaque on hover */
+}
+
+/* Alternative highlight styles for different types of highlighting */
+.jp-dyno-error-line {
+  background-color: rgba(244, 67, 54, 0.1) !important; /* Light red for errors */
+  border-left: 3px solid #f44336 !important;
+}
+
+.jp-dyno-warning-line {
+  background-color: rgba(255, 152, 0, 0.1) !important; /* Light orange for warnings */
+  border-left: 3px solid #ff9800 !important;
+}
+
+.jp-dyno-success-line {
+  background-color: rgba(76, 175, 80, 0.1) !important; /* Light green for success */
+  border-left: 3px solid #4caf50 !important;
+}
+
+/* Ensure highlighting works with CodeMirror 6 line elements */
+.cm-line.jp-dyno-highlighted-line,
+.CodeMirror-line.jp-dyno-highlighted-line {
+  background-color: rgba(255, 235, 59, 0.3) !important;
+  border-left: 3px solid #ffc107 !important;
+}
+
+.cm-line.jp-dyno-error-line,
+.CodeMirror-line.jp-dyno-error-line {
+  background-color: rgba(244, 67, 54, 0.1) !important;
+  border-left: 3px solid #f44336 !important;
+}
+
+.cm-line.jp-dyno-warning-line,
+.CodeMirror-line.jp-dyno-warning-line {
+  background-color: rgba(255, 152, 0, 0.1) !important;
+  border-left: 3px solid #ff9800 !important;
+}
+
+.cm-line.jp-dyno-success-line,
+.CodeMirror-line.jp-dyno-success-line {
+  background-color: rgba(76, 175, 80, 0.1) !important;
+  border-left: 3px solid #4caf50 !important;
+}
+
+/* Ensure highlighting persists during selection and focus */
+.cm-focused .cm-line.jp-dyno-highlighted-line,
+.CodeMirror-focused .CodeMirror-line.jp-dyno-highlighted-line {
+  background-color: rgba(255, 235, 59, 0.3) !important;
+  border-left: 3px solid #ffc107 !important;
+}
+
+.cm-focused .cm-line.jp-dyno-error-line,
+.CodeMirror-focused .CodeMirror-line.jp-dyno-error-line {
+  background-color: rgba(244, 67, 54, 0.1) !important;
+  border-left: 3px solid #f44336 !important;
+}
+
+.cm-focused .cm-line.jp-dyno-warning-line,
+.CodeMirror-focused .CodeMirror-line.jp-dyno-warning-line {
+  background-color: rgba(255, 152, 0, 0.1) !important;
+  border-left: 3px solid #ff9800 !important;
+}
+
+.cm-focused .cm-line.jp-dyno-success-line,
+.CodeMirror-focused .CodeMirror-line.jp-dyno-success-line {
+  background-color: rgba(76, 175, 80, 0.1) !important;
+  border-left: 3px solid #4caf50 !important;
+}
+
 /* Make sure the widget container is positioned relative for absolute positioning */
 .jupyterlab-dyno {
   position: relative;
   min-height: 200px;
+}
+
+/* Syntax highlighting styles for DYNO and MOD languages */
+
+/* Comments */
+.cm-editor .cm-line .cm-comment {
+  color: #6a9955;
+  font-style: italic;
+}
+
+/* Keywords (var, model, end, etc.) */
+.cm-editor .cm-line .cm-keyword {
+  color: #569cd6;
+  font-weight: bold;
+}
+
+/* Built-in functions (log, exp, etc.) */
+.cm-editor .cm-line .cm-builtin {
+  color: #4ec9b0;
+  font-weight: 500;
+}
+
+/* Numbers */
+.cm-editor .cm-line .cm-number {
+  color: #b5cea8;
+}
+
+/* Variables */
+.cm-editor .cm-line .cm-variable {
+  color: #9cdcfe;
+}
+
+/* Secondary variables (user-defined) */
+.cm-editor .cm-line .cm-variable-2 {
+  color: #dcdcaa;
+}
+
+/* Operators */
+.cm-editor .cm-line .cm-operator {
+  color: #d4d4d4;
+}
+
+/* Special atoms (time subscripts [t], [t+1], etc.) */
+.cm-editor .cm-line .cm-atom {
+  color: #ffd700;
+  font-weight: bold;
+}
+
+/* Time subscripts (t, t+1, t-1, ~, (+1), (-1)) */
+.cm-editor .cm-line .cm-time-subscript {
+  color: #ff6b6b;
+  font-weight: bold;
+}
+
+/* Brackets (inherit variable color) */
+.cm-editor .cm-line .cm-bracket {
+  color: #9cdcfe;
+  font-weight: normal;
+}
+
+/* Meta (section headers) */
+.cm-editor .cm-line .cm-meta {
+  color: #c586c0;
+  font-weight: bold;
+}
+
+/* Punctuation */
+.cm-editor .cm-line .cm-punctuation {
+  color: #cccccc;
+}
+
+/* Light theme syntax highlighting */
+[data-jp-theme-light] .cm-editor .cm-line .cm-comment {
+  color: #008000;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-keyword {
+  color: #0000ff;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-builtin {
+  color: #795e26;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-number {
+  color: #098658;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-variable {
+  color: #001080;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-variable-2 {
+  color: #795e26;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-operator {
+  color: #000000;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-atom {
+  color: #0451a5;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-time-subscript {
+  color: #d63384;
+  font-weight: bold;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-bracket {
+  color: #001080;
+  font-weight: normal;
+}
+
+[data-jp-theme-light] .cm-editor .cm-line .cm-meta {
+  color: #800080;
 }
