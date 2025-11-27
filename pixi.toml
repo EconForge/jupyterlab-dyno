@@ -21,7 +21,7 @@ name = "jupyterlab_dyno"
 version = "0.0.2"
 
 [package.build]
-backend = { name = "pixi-build-python", version = "==0.3.2" }
+backend = { name = "pixi-build-python", version = "*" }
 
 [package.host-dependencies] 
 hatchling = ">=1.5.0"

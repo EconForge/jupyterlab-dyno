@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "jupyterlab_dyno"
 readme = "README.md"
-license = { file = "LICENSE" }
+license = "BSD-3-Clause"
 requires-python = ">=3.9"
 classifiers = [
     "Framework :: Jupyter",
