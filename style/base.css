@@ -53,3 +53,206 @@
   position: relative;
   min-height: 200px;
 }
+
+/* Dyno Tutor Styles */
+.dyno-tutor-container {
+  padding: 16px;
+  font-family: var(--jp-ui-font-family);
+}
+
+.dyno-tutor-section {
+  margin-bottom: 20px;
+}
+
+.dyno-tutor-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--jp-brand-color1);
+}
+
+.dyno-tutor-image {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.dyno-tutor-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--jp-ui-font-color1);
+  margin: 0;
+  flex: 1;
+}
+
+.dyno-tutor-current-task {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dyno-tutor-current-task-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  opacity: 0.9;
+}
+
+.dyno-tutor-task-name {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.dyno-tutor-task-description {
+  font-size: 14px;
+  line-height: 1.5;
+  opacity: 0.95;
+}
+
+.dyno-tutor-task-list {
+  background: var(--jp-layout-color1);
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.dyno-tutor-task-list-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--jp-ui-font-color2);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dyno-tutor-task-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  margin-bottom: 6px;
+  background: var(--jp-layout-color2);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.dyno-tutor-task-item:hover {
+  background: var(--jp-layout-color3);
+  border-color: var(--jp-brand-color1);
+  transform: translateX(4px);
+}
+
+.dyno-tutor-task-item.completed {
+  opacity: 0.7;
+}
+
+.dyno-tutor-task-item.completed .dyno-tutor-task-label {
+  text-decoration: line-through;
+}
+
+.dyno-tutor-checkbox {
+  font-size: 18px;
+  margin-right: 12px;
+  display: inline-block;
+  min-width: 24px;
+}
+
+.dyno-tutor-task-label {
+  font-size: 14px;
+  color: var(--jp-ui-font-color1);
+  flex: 1;
+}
+
+.dyno-tutor-progress {
+  text-align: center;
+  padding: 12px;
+  background: var(--jp-layout-color1);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--jp-brand-color1);
+  border: 2px dashed var(--jp-border-color2);
+}
+
+.dyno-tutor-congrats {
+  text-align: center;
+  padding: 16px;
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.dyno-tutor-divider {
+  border: none;
+  border-top: 2px solid var(--jp-border-color2);
+  margin: 24px 0;
+}
+
+/* Options Section */
+.dyno-options-section {
+  margin-top: 20px;
+}
+
+.dyno-options-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--jp-ui-font-color2);
+  margin: 0 0 12px 0;
+}
+
+.dyno-options-form fieldset {
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 4px;
+  padding: 12px;
+  background: var(--jp-layout-color1);
+}
+
+.dyno-options-form label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: var(--jp-ui-font-color2);
+}
+
+.dyno-options-form input[type="number"] {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 3px;
+  background: var(--jp-layout-color2);
+  color: var(--jp-ui-font-color1);
+  font-family: var(--jp-ui-font-family);
+  margin-bottom: 12px;
+}
+
+.dyno-options-form input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.dyno-options-form div {
+  margin-bottom: 8px;
+}

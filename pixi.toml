@@ -32,7 +32,7 @@ jupyterlab = ">=4.0.0,<5"
 
 [package.run-dependencies]
 #dyno = ">=0.1.5.dev7"
-#dyno = { path = "/home/pablo/Econforge/dyno.py" }
-dyno = ">=0.1.6"
+dyno = { path = "/home/pablo/Econforge/dyno.py" }
+#dyno = ">=0.1.6"
 xeus-python = ">=0.17.4,<0.18"
 nlohmann_json = "==3.12"
