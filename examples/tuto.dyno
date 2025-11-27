@@ -1,0 +1,13 @@
+### follow the instructions
+### to learn how to write a model
+
+
+rho <- 0.1
+
+x[~] <- 0.0
+
+x[t] = rho * x[t-1] + epsilon[t]
+
+epsilon[0] <- 0.0
+epsilon[1] <- 0.1
+epsilon[2] <- 0.1
