@@ -38,6 +38,9 @@ import { ToolbarButton } from '@jupyterlab/apputils';
 
 import { dyno, mod } from './languages/dyno-language';
 
+import { StateField, StateEffect, Compartment, EditorState } from '@codemirror/state';
+import { EditorView, Decoration } from '@codemirror/view';
+
 // Default settings, see schema/plugin.json for more details
 let global_setting = {};
 let preserveScrollPosition = true;
@@ -67,7 +70,7 @@ const PLOTLY_CDN_URL = 'https://cdn.plot.ly/plotly-3.1.0.min.js';
 /**
  * Plugin id, follows a strict convention
  * package name: "jupyterlab-dyno" needs to be the same as package.json
- * settings name: "plugin" needs to be the file name in schema/ that describes extension settings (here plugin.json)
+ * settings name: "plugin" needs to be the file name in schema/that describes extension settings (here plugin.json)
  */
 const PLUGIN_ID = 'jupyterlab-dyno:plugin';
 
@@ -197,6 +200,9 @@ export class DynareWidget
       this._isFirstRender = false;
     }
     
+    // Clear any existing highlights from previous runs
+    this.clearHighlights();
+    
     // Preserve scroll position of the output panel across re-renders (if enabled)
     const container = this.content.node;
     const prevScrollTop = preserveScrollPosition ? container.scrollTop : 0;
@@ -214,6 +220,18 @@ export class DynareWidget
     // Merge global settings with per-file options if any
     const perFile = dynoFileOptionsRegistry.get(this.context.path) || {};
     const merged = { ...global_setting, ...perFile };
+
+    // Map irf_type to irf-type for the python function
+    if (merged.irf_type) {
+      merged['irf-type'] = merged.irf_type;
+      delete merged.irf_type;
+    }
+
+    // Map irf_horizon to irf-horizon for the python function
+    if (merged.irf_horizon) {
+      merged['irf-horizon'] = merged.irf_horizon;
+      delete merged.irf_horizon;
+    }
 
     // Choose kernel code based on file type
   const code = `import warnings
@@ -580,6 +598,29 @@ dsge_report(txt=txt, filename=filename, **options)`;
       // Try to get the CodeMirror editor view
       const editorView = (editor as any).editor;
       
+      // Try to use the new extension mechanism first
+      if (this._setHighlightEffect && editorView) {
+          console.log('[DEBUG] Using CodeMirror 6 extension for highlighting');
+          try {
+              // Sort lines to ensure decorations are created in order
+              const sortedLines = [...lineNumbers].sort((a, b) => a - b);
+              const payload = sortedLines.map(line => ({line, class: className}));
+              
+              editorView.dispatch({
+                  effects: this._setHighlightEffect.of(payload)
+              });
+              
+              // Also store for legacy cleanup if needed, though the extension handles it
+              lineNumbers.forEach(lineNum => {
+                  this._persistentHighlights.set(lineNum, className);
+              });
+              return;
+          } catch (e) {
+              console.error('[DEBUG] Error dispatching highlight effect:', e);
+              // Fallback to old method
+          }
+      }
+      
       if (editorView && editorView.state && editorView.dispatch) {
         console.log('[DEBUG] Using CodeMirror 6 style highlighting');
         
@@ -652,6 +693,34 @@ dsge_report(txt=txt, filename=filename, **options)`;
       // For JupyterLab 4.x with CodeMirror 6, we need to use a different approach
       // Try to get the CodeMirror editor view
       const editorView = (editor as any).editor;
+      
+      // Try to use the new extension mechanism first
+      if (this._setHighlightEffect && editorView) {
+          console.log('[DEBUG] Using CodeMirror 6 extension for highlighting (without clear)');
+          try {
+              // Update persistent highlights
+              lineNumbers.forEach(lineNum => {
+                  this._persistentHighlights.set(lineNum, className);
+              });
+              
+              // Re-dispatch all highlights
+              const allHighlights: any[] = [];
+              this._persistentHighlights.forEach((cls, line) => {
+                  allHighlights.push({line, class: cls});
+              });
+              
+              const sortedHighlights = allHighlights.sort((a, b) => a.line - b.line);
+              
+              editorView.dispatch({
+                  effects: this._setHighlightEffect.of(sortedHighlights)
+              });
+              
+              return;
+          } catch (e) {
+              console.error('[DEBUG] Error dispatching highlight effect:', e);
+              // Fallback to old method
+          }
+      }
       
       if (editorView && editorView.state && editorView.dispatch) {
         console.log('[DEBUG] Using CodeMirror 6 style highlighting');
@@ -859,6 +928,20 @@ dsge_report(txt=txt, filename=filename, **options)`;
   clearHighlights(): void {
     console.log('[DEBUG] Clearing highlights...');
     
+    // Clear using extension
+    const editor = this._editorWidget?.content?.editor;
+    const editorView = (editor as any)?.editor;
+    
+    if (this._setHighlightEffect && editorView) {
+        try {
+            editorView.dispatch({
+                effects: this._setHighlightEffect.of([])
+            });
+        } catch (e) {
+            console.error('[DEBUG] Error clearing highlights via extension:', e);
+        }
+    }
+    
     // Clear stored highlight data
     if (this._persistentHighlights) {
       this._persistentHighlights.clear();
@@ -884,7 +967,6 @@ dsge_report(txt=txt, filename=filename, **options)`;
     }
     
     // Additional cleanup: remove all our highlight classes from the editor DOM
-    const editor = this._editorWidget?.content?.editor;
     if (editor) {
       const editorElement = (editor as any).host || (this._editorWidget.content as any).node;
       
@@ -912,6 +994,53 @@ dsge_report(txt=txt, filename=filename, **options)`;
   }
 
   /**
+   * Set up CodeMirror 6 highlighting extension
+   */
+  private _setupHighlightingExtension(editorView: any): void {
+    try {
+      console.log('[DEBUG] Setting up highlighting extension with top-level imports');
+      
+      // Define the effect to add/remove highlights
+      this._setHighlightEffect = StateEffect.define<any[]>();
+
+      // Define the field
+      this._highlightField = StateField.define({
+        create() { return Decoration.none; },
+        update: (highlights: any, tr: any) => {
+          highlights = highlights.map(tr.changes);
+          for (let e of tr.effects) {
+            if (e.is(this._setHighlightEffect)) {
+              // e.value should be array of {line, class}
+              // We need to construct decorations
+              const decorations = e.value.map((item: any) => {
+                  // Check if line is valid
+                  if (item.line > tr.state.doc.lines) return null;
+                  const line = tr.state.doc.line(item.line);
+                  return Decoration.line({ attributes: { class: item.class } }).range(line.from);
+              }).filter((d: any) => d !== null);
+              return Decoration.set(decorations, true); // true for sorted
+            }
+          }
+          return highlights;
+        },
+        provide: (f: any) => EditorView.decorations.from(f)
+      });
+
+      if (!this._highlightCompartment) {
+          this._highlightCompartment = new Compartment();
+          
+          // Add the extension to the editor
+          editorView.dispatch({
+              effects: StateEffect.appendConfig.of(this._highlightCompartment.of(this._highlightField))
+          });
+          console.log('[DEBUG] Highlighting extension setup complete');
+      }
+    } catch (error) {
+      console.error('[DEBUG] Error setting up highlighting extension:', error);
+    }
+  }
+
+  /**
    * Set the reference to the associated editor widget
    */
   setEditorWidget(editorWidget: any): void {
@@ -927,6 +1056,13 @@ dsge_report(txt=txt, filename=filename, **options)`;
       
       // Apply syntax highlighting
       this._applySyntaxHighlighting();
+      
+      // Setup persistent highlighting extension
+      const editor = this._editorWidget.content.editor;
+      const editorView = (editor as any).editor;
+      if (editorView) {
+          this._setupHighlightingExtension(editorView);
+      }
       
       // Don't automatically test highlighting - let it be triggered by actual data
     }).catch(error => {
@@ -1056,44 +1192,26 @@ dsge_report(txt=txt, filename=filename, **options)`;
           
           try {
             // Approach 1: Try direct language reconfiguration
-            import('@codemirror/state').then(({ Compartment, StateEffect }) => {
-              console.log('[DEBUG] Loaded CodeMirror state module');
+            // Use top-level imports
+            console.log('[DEBUG] Using top-level CodeMirror state imports');
+            
+            if (!this._languageCompartment) {
+              this._languageCompartment = new Compartment();
               
-              if (!this._languageCompartment) {
-                this._languageCompartment = new Compartment();
-                
-                // Apply initial configuration
-                const transaction = editorView.state.update({
-                  effects: this._languageCompartment.reconfigure(languageMode)
-                });
-                editorView.dispatch(transaction);
-                console.log('[DEBUG] Language mode applied with new compartment');
-              } else {
-                // Reconfigure existing
-                const transaction = editorView.state.update({
-                  effects: this._languageCompartment.reconfigure(languageMode)
-                });
-                editorView.dispatch(transaction);
-                console.log('[DEBUG] Language mode reconfigured');
-              }
-            }).catch(error => {
-              console.error('[DEBUG] Error with Compartment approach:', error);
-              
-              // Approach 2: Try extension approach
-              try {
-                const newExtensions = [languageMode];
-                const transaction = editorView.state.update({
-                  effects: { reconfigure: newExtensions }
-                });
-                editorView.dispatch(transaction);
-                console.log('[DEBUG] Language mode applied via extension reconfiguration');
-              } catch (extError) {
-                console.error('[DEBUG] Extension approach failed:', extError);
-                
-                // Approach 3: Try replacing the entire configuration
-                this._tryAdvancedLanguageApplication(editorView, languageMode, filePath);
-              }
-            });
+              // Apply initial configuration
+              const transaction = editorView.state.update({
+                effects: this._languageCompartment.reconfigure(languageMode)
+              });
+              editorView.dispatch(transaction);
+              console.log('[DEBUG] Language mode applied with new compartment');
+            } else {
+              // Reconfigure existing
+              const transaction = editorView.state.update({
+                effects: this._languageCompartment.reconfigure(languageMode)
+              });
+              editorView.dispatch(transaction);
+              console.log('[DEBUG] Language mode reconfigured');
+            }
           } catch (mainError) {
             console.error('[DEBUG] Main language application failed:', mainError);
             this._tryAdvancedLanguageApplication(editorView, languageMode, filePath);
@@ -1120,19 +1238,14 @@ dsge_report(txt=txt, filename=filename, **options)`;
       // Try getting the current document and creating a new state
       const currentDoc = editorView.state.doc;
       
-      import('@codemirror/state').then(({ EditorState }) => {
-        const newState = EditorState.create({
-          doc: currentDoc,
-          extensions: [languageMode]
-        });
-        
-        // Replace the entire state
-        editorView.setState(newState);
-        console.log('[DEBUG] Applied language mode by replacing editor state');
-      }).catch(error => {
-        console.error('[DEBUG] Advanced application failed:', error);
-        this._trySimpleSyntaxHighlighting(filePath);
+      const newState = EditorState.create({
+        doc: currentDoc,
+        extensions: [languageMode]
       });
+      
+      // Replace the entire state
+      editorView.setState(newState);
+      console.log('[DEBUG] Applied language mode by replacing editor state');
     } catch (error) {
       console.error('[DEBUG] Advanced language application error:', error);
       this._trySimpleSyntaxHighlighting(filePath);
@@ -1204,34 +1317,6 @@ dsge_report(txt=txt, filename=filename, **options)`;
   }
 
   /**
-   * Test highlighting functionality - can be called manually for debugging
-   */
-  testHighlighting(): void {
-    console.log('[DEBUG] === TESTING HIGHLIGHTING ===');
-    
-    try {
-      // Test different highlight styles
-      console.log('[DEBUG] Testing default highlighting on lines 1-2');
-      this.highlightLines([1, 2], 'jp-dyno-highlighted-line');
-      
-      // Test with a delay for error highlighting
-      setTimeout(() => {
-        console.log('[DEBUG] Testing error highlighting on line 3');
-        this.highlightLines([3], 'jp-dyno-error-line');
-      }, 2000);
-      
-      // Test with another delay for warning highlighting
-      setTimeout(() => {
-        console.log('[DEBUG] Testing warning highlighting on line 4');
-        this.highlightLines([4], 'jp-dyno-warning-line');
-      }, 4000);
-      
-    } catch (error) {
-      console.error('[DEBUG] Error in testHighlighting:', error);
-    }
-  }
-
-  /**
    * Wait for the editor to be fully ready
    */
   private async _waitForEditorReady(): Promise<void> {
@@ -1279,13 +1364,21 @@ dsge_report(txt=txt, filename=filename, **options)`;
       console.log(`[DEBUG] Output ${i}:`, output);
       console.log(`[DEBUG] Output ${i} type:`, output.output_type);
       
+      if (output.output_type === 'error') {
+        console.log('[DEBUG] Found error output, attempting to extract line number');
+        this._handleErrorOutput(output.traceback);
+      }
+
       if (output.output_type === 'display_data' && output.data) {
-        console.log(`[DEBUG] Output ${i} data keys:`, Object.keys(output.data));
+        const keys = Object.keys(output.data);
+        console.log(`[DEBUG] Output ${i} data keys:`, keys);
         
         // Check for our custom MIME type
         const mimeType = 'application/vnd.jupyterlab-dyno.highlighting+json';
         
-        if (mimeType in output.data) {
+        if (keys.includes(mimeType)) {
+          console.log('[DEBUG] FOUND MIME TYPE:', mimeType);
+          console.log('[DEBUG] Content:', output.data[mimeType]);
           const highlightData = output.data[mimeType];
           console.log('[DEBUG] *** FOUND HIGHLIGHTING MIME DATA ***:', highlightData);
           
@@ -1332,6 +1425,69 @@ dsge_report(txt=txt, filename=filename, **options)`;
     
     console.log('[DEBUG] No MIME highlighting data found. No fallback highlighting will be applied.');
     console.log('[DEBUG] Highlighting check completed - only MIME type highlighting is active.');
+  }
+
+  /**
+   * Handle error output to extract and highlight line numbers from traceback
+   */
+  private _handleErrorOutput(traceback: string[]): void {
+    if (!traceback || !Array.isArray(traceback)) {
+      return;
+    }
+
+    console.log('[DEBUG] Analyzing traceback for line numbers');
+    
+    // Regex to find line numbers in Python traceback
+    // Matches: File "filename", line 123
+    const lineRegex = /File\s+".*?",\s+line\s+(\d+)/;
+    // Fallback for some error messages: line 123
+    const simpleLineRegex = /line\s+(\d+)/;
+    
+    let foundLine = -1;
+
+    // Iterate backwards through traceback to find the most relevant (recent) line number
+    // that corresponds to the user's code (usually the last one before library code)
+    for (let i = traceback.length - 1; i >= 0; i--) {
+      const line = traceback[i];
+      
+      // Remove ANSI color codes for regex matching
+      const cleanLine = line.replace(/\u001b\[\d+m/g, '');
+      
+      const match = cleanLine.match(lineRegex);
+      if (match && match[1]) {
+        const lineNum = parseInt(match[1], 10);
+        // We assume the error is in the file being edited
+        // In a real scenario, we might check if the filename matches
+        foundLine = lineNum;
+        console.log(`[DEBUG] Found line number in traceback: ${foundLine}`);
+        break;
+      }
+    }
+
+    // If no standard traceback line found, try simpler pattern
+    if (foundLine === -1) {
+      for (let i = traceback.length - 1; i >= 0; i--) {
+        const line = traceback[i];
+        const cleanLine = line.replace(/\u001b\[\d+m/g, '');
+        
+        const match = cleanLine.match(simpleLineRegex);
+        if (match && match[1]) {
+          foundLine = parseInt(match[1], 10);
+          console.log(`[DEBUG] Found line number with simple regex: ${foundLine}`);
+          break;
+        }
+      }
+    }
+
+    if (foundLine > 0) {
+      console.log(`[DEBUG] Highlighting error at line ${foundLine}`);
+      // Use a small delay to ensure editor is ready
+      setTimeout(() => {
+        this.highlightLines([foundLine], 'jp-dyno-error-line');
+      }, 200);
+    } else {
+      console.log('[DEBUG] No line number found in traceback');
+    }
   }
 
 
@@ -1406,6 +1562,9 @@ dsge_report(txt=txt, filename=filename, **options)`;
   private _highlightMarks: any[] = []; // Store highlight marks for cleanup
   private _persistentHighlights: Map<number, string> = new Map(); // Store persistent highlight info
   private _languageCompartment: any = null; // CodeMirror language compartment
+  private _setHighlightEffect: any = null; // CodeMirror state effect for highlighting
+  private _highlightField: any = null; // CodeMirror state field for highlighting
+  private _highlightCompartment: any = null; // CodeMirror compartment for highlighting
 }
 
 /**

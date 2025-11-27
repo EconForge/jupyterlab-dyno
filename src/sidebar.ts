@@ -5,6 +5,8 @@ export interface IDynoFileOptions {
   order?: number;
   steady_state_only?: boolean;
   preserveScrollPosition?: boolean; // mirrors global setting override per file
+  irf_type?: 'level' | 'deviation' | 'log-deviation';
+  irf_horizon?: number;
 }
 
 /**
@@ -43,13 +45,13 @@ export class DynoOptionsPanel extends Widget {
 
     // Order input
     const orderLabel = document.createElement('label');
-    orderLabel.textContent = 'Order:';
+    orderLabel.textContent = 'Approximation Order:';
     orderLabel.htmlFor = 'dyno-order';
     const orderInput = document.createElement('input');
     orderInput.id = 'dyno-order';
     orderInput.type = 'number';
     orderInput.min = '1';
-    orderInput.max = '6';
+    orderInput.max = '1';
     orderInput.step = '1';
     orderInput.value = String(this._options.order ?? 1);
     orderInput.addEventListener('change', () => {
@@ -60,9 +62,55 @@ export class DynoOptionsPanel extends Widget {
       }
     });
 
+    // IRF Type select
+    const irfLabel = document.createElement('label');
+    irfLabel.textContent = 'Simuation Type:';
+    irfLabel.htmlFor = 'dyno-irf-type';
+    const irfSelect = document.createElement('select');
+    irfSelect.id = 'dyno-irf-type';
+    
+    const irfOptions = [
+      { value: 'level', text: 'Level' },
+      { value: 'deviation', text: 'Deviation' },
+      { value: 'log-deviation', text: 'Log-Deviation' }
+    ];
+
+    irfOptions.forEach(opt => {
+      const option = document.createElement('option');
+      option.value = opt.value;
+      option.textContent = opt.text;
+      if (opt.value === (this._options.irf_type || 'level')) {
+        option.selected = true;
+      }
+      irfSelect.appendChild(option);
+    });
+
+    irfSelect.addEventListener('change', () => {
+      this._options.irf_type = irfSelect.value as any;
+      this._changed.emit(this.getOptions());
+    });
+
+    // Horizon input
+    const horizonLabel = document.createElement('label');
+    horizonLabel.textContent = 'Horizon:';
+    horizonLabel.htmlFor = 'dyno-horizon';
+    const horizonInput = document.createElement('input');
+    horizonInput.id = 'dyno-horizon';
+    horizonInput.type = 'number';
+    horizonInput.min = '1';
+    horizonInput.step = '1';
+    horizonInput.value = String(this._options.irf_horizon ?? 40);
+    horizonInput.addEventListener('change', () => {
+      const v = parseInt(horizonInput.value, 10);
+      if (!isNaN(v)) {
+        this._options.irf_horizon = v;
+        this._changed.emit(this.getOptions());
+      }
+    });
+
     // steady_state_only checkbox
     const ssLabel = document.createElement('label');
-    ssLabel.textContent = 'Steady state only';
+    ssLabel.textContent = 'Recompute Steady-State';
     ssLabel.htmlFor = 'dyno-steady';
     const ssInput = document.createElement('input');
     ssInput.id = 'dyno-steady';
@@ -89,6 +137,19 @@ export class DynoOptionsPanel extends Widget {
     const fieldset = document.createElement('fieldset');
     fieldset.appendChild(orderLabel);
     fieldset.appendChild(orderInput);
+    
+    const irfWrapper = document.createElement('div');
+    irfWrapper.style.marginTop = '10px';
+    irfWrapper.style.marginBottom = '10px';
+    irfWrapper.appendChild(irfLabel);
+    irfWrapper.appendChild(irfSelect);
+    fieldset.appendChild(irfWrapper);
+
+    const horizonWrapper = document.createElement('div');
+    horizonWrapper.style.marginBottom = '10px';
+    horizonWrapper.appendChild(horizonLabel);
+    horizonWrapper.appendChild(horizonInput);
+    fieldset.appendChild(horizonWrapper);
 
     const ssWrapper = document.createElement('div');
     ssWrapper.appendChild(ssInput);
@@ -110,6 +171,6 @@ export class DynoOptionsPanel extends Widget {
     this._render();
   }
 
-  private _options: IDynoFileOptions = { order: 1, steady_state_only: false };
+  private _options: IDynoFileOptions = { order: 1, steady_state_only: false, irf_type: 'level', irf_horizon: 40 };
   private _changed = new Signal<this, IDynoFileOptions>(this);
 }

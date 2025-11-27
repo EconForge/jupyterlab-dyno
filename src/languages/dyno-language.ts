@@ -51,7 +51,7 @@ export const dynoMode = {
     }
     
     // Distribution notation for shocks N(0, sigma)
-    if (stream.match(/\bN\(/)) {
+    if (stream.match(/\bN(?=\()/)) {
       return 'builtin';
     }
     
