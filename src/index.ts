@@ -221,6 +221,10 @@ export class DynareWidget
     const perFile = dynoFileOptionsRegistry.get(this.context.path) || {};
     const merged = { ...global_setting, ...perFile };
 
+    if (typeof merged.display_graph !== 'boolean') {
+      merged.display_graph = true;
+    }
+
     // Map irf_type to irf-type for the python function
     if (merged.irf_type) {
       merged['irf-type'] = merged.irf_type;

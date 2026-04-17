@@ -17,18 +17,6 @@
       "enum": ["dynare","lark"],
       "default": "lark"
     },
-    "simulation-horizon": {
-      "type": "integer",
-      "title": "Simulation horizon",
-      "description": "Number of periods to simulate for IRFs",
-      "default": 40
-    },
-    "deriv-order": {
-      "type": "integer",
-      "title": "Derivation order",
-      "description": "Order of differentiation of the model's endogenous and exogenous variables",
-      "default": 1
-    },
     "kernel-restart": {
       "type": "boolean",
       "title": "Restart Kernel on Solve",
@@ -48,6 +36,12 @@
       "title": "Debug Output",
       "description": "Debug: input is printed directly. ",
       "default": false
+    },
+    "display_graph": {
+      "type": "boolean",
+      "title": "Display Graph",
+      "description": "If enabled, graph outputs are displayed in Dyno reports.",
+      "default": true
     }
   },
   "additionalProperties": false
