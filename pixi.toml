@@ -14,8 +14,8 @@ nodejs = ">=24.4.0,<24.5"
 jupyterlab-myst = ">=2.4.2,<3"
 
 [package]
-name = "jupyterlab_dyno"
-version = "0.0.3"
+name = "jupyterlab-dyno"
+version = "0.0.3.2"
 
 [package.build]
 backend = { name = "pixi-build-python", version = "*" }
@@ -32,5 +32,5 @@ jupyterlab = ">=4.0.0,<5"
 # dyno = { path = "/home/pablo/Econforge/dyno.py"}
 #dyno = ">=0.1.5.dev7"
 dyno = ">=0.1.7"
-xeus-python = ">=0.17.4,<0.18"
+xeus-python = ">=0.18"
 nlohmann_json = "==3.12"

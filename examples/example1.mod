@@ -32,7 +32,7 @@ alpha = 0.36;
 rho   = 0.95;
 tau   = 0.025;
 beta  = 0.99;
-delta = 0.02509;
+delta = 0.03;
 psi   = 0;
 theta = 2.95;
 phi   = 0.1;
@@ -66,4 +66,6 @@ var u; stderr 0.009;
 var e, u = phi*0.009*0.0090;
 end;
 
+steady;
+check;
 stoch_simul;
