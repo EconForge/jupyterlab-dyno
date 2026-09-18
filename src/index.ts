@@ -15,6 +15,7 @@ import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { IEditorLanguageRegistry } from '@jupyterlab/codemirror';
 
 import { Token } from '@lumino/coreutils';
+import { DockPanel, TabBar, Widget } from '@lumino/widgets';
 
 import { SessionContext } from '@jupyterlab/apputils';
 
@@ -245,7 +246,13 @@ warnings.filterwarnings('ignore')
 from dyno.report import dsge_report
 filename = '${path}'
 txt = '''${data}'''
-dsge_report(txt=txt, filename=filename, **options)`;
+_res = dsge_report(txt=txt, filename=filename, **options)
+if _res is not None and str(options.get('output_type', 'markdown')).lower() != 'markdown':
+    if hasattr(_res, 'display'):
+        _res.display()
+    else:
+        from IPython.display import display
+        display(_res)`;
 
     // Execute in a hidden output area to avoid clearing the visible output unnecessarily
     const tempModel = new OutputAreaModel({ trusted: true });
@@ -554,19 +561,56 @@ dsge_report(txt=txt, filename=filename, **options)`;
   // }
 
   /**
+   * Deduplicate outputs where execute_result repeats an existing display_data output.
+   */
+  private _deduplicateOutputs(outputs: any[]): any[] {
+    if (!Array.isArray(outputs) || outputs.length <= 1) {
+      return outputs;
+    }
+    const seenDisplayData = new Set<string>();
+    for (const out of outputs) {
+      if (out && out.output_type === 'display_data' && out.data) {
+        const key =
+          out.data['text/markdown'] ||
+          out.data['text/html'] ||
+          out.data['text/plain'];
+        if (key && typeof key === 'string') {
+          seenDisplayData.add(key);
+        }
+      }
+    }
+    if (seenDisplayData.size === 0) {
+      return outputs;
+    }
+    return outputs.filter(out => {
+      if (out && out.output_type === 'execute_result' && out.data) {
+        const key =
+          out.data['text/markdown'] ||
+          out.data['text/html'] ||
+          out.data['text/plain'];
+        if (key && typeof key === 'string' && seenDisplayData.has(key)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  /**
    * Apply outputs array to the visible output area model.
    */
   private _applyOutputsToVisibleModel(outputs: any[]): void {
+    const deduplicated = this._deduplicateOutputs(outputs);
     const model: any = this.content.model as any;
     if (typeof model.fromJSON === 'function') {
-      model.fromJSON(outputs);
+      model.fromJSON(deduplicated);
       return;
     }
     if (typeof model.clear === 'function') {
       model.clear();
     }
-    if (Array.isArray(outputs)) {
-      for (const out of outputs) {
+    if (Array.isArray(deduplicated)) {
+      for (const out of deduplicated) {
         if (typeof model.add === 'function') {
           model.add(out);
         }
@@ -1042,6 +1086,13 @@ dsge_report(txt=txt, filename=filename, **options)`;
     } catch (error) {
       console.error('[DEBUG] Error setting up highlighting extension:', error);
     }
+  }
+
+  /**
+   * Get the reference to the associated editor widget
+   */
+  get editorWidget(): any {
+    return this._editorWidget;
   }
 
   /**
@@ -1621,6 +1672,146 @@ export const IDynareTracker = new Token<IWidgetTracker<DynareWidget>>(
 const FACTORY = 'Dyno extension';
 
 /**
+ * Helper to find the TabBar containing a widget within the DockPanel.
+ */
+export function findTabBarForWidget(
+  dock: DockPanel | null,
+  widget: Widget | null
+): TabBar<Widget> | null {
+  if (!dock || !widget || !dock.tabBars) {
+    return null;
+  }
+  for (const bar of dock.tabBars()) {
+    if (bar.titles.some(t => t.owner === widget)) {
+      return bar;
+    }
+  }
+  return null;
+}
+
+/**
+ * Ensures the editor for this DynareWidget is opened and positioned
+ * side-by-side with the solution view (editor on left, solution view on right).
+ */
+export async function openAndPositionEditor(
+  app: JupyterFrontEnd,
+  tracker: WidgetTracker<DynareWidget>,
+  widget: DynareWidget
+): Promise<void> {
+  const { commands, shell } = app;
+
+  // Wait until docmanager has finished adding widget to shell dock
+  await new Promise(resolve => setTimeout(resolve, 0));
+  if (widget.isDisposed) {
+    return;
+  }
+
+  // Check if an editor for this path is already open in the main area
+  let editor: Widget | null = null;
+  for (const w of shell.widgets('main')) {
+    if (w !== widget && (w as any).context?.path === widget.context.path) {
+      editor = w;
+      break;
+    }
+  }
+
+  const dock = (widget.parent as DockPanel) || null;
+
+  // Check if there is an existing two-panel layout established by other DynareWidgets
+  let referenceViewer: DynareWidget | null = null;
+  let referenceEditor: Widget | null = null;
+
+  if (dock) {
+    const foundViewer = tracker.find(otherWidget => {
+      if (
+        otherWidget !== widget &&
+        !otherWidget.isDisposed &&
+        otherWidget.isAttached
+      ) {
+        const otherEditor = otherWidget.editorWidget;
+        if (
+          otherEditor &&
+          !otherEditor.isDisposed &&
+          otherEditor.isAttached
+        ) {
+          const vBar = findTabBarForWidget(dock, otherWidget);
+          const eBar = findTabBarForWidget(dock, otherEditor);
+          return !!(vBar && eBar && vBar !== eBar);
+        }
+      }
+      return false;
+    });
+
+    if (foundViewer) {
+      referenceViewer = foundViewer;
+      referenceEditor = foundViewer.editorWidget;
+    }
+  }
+
+  if (referenceViewer && referenceEditor) {
+    // Two panels already exist: editor panel and viewer panel
+    // Ensure this solution view is in the viewer panel
+    const currentViewerBar = findTabBarForWidget(dock, widget);
+    const targetViewerBar = findTabBarForWidget(dock, referenceViewer);
+    if (currentViewerBar !== targetViewerBar) {
+      shell.add(widget, 'main', {
+        mode: 'tab-after',
+        ref: referenceViewer.id
+      });
+    }
+
+    // Open or move editor into the editor panel
+    if (!editor) {
+      editor = (await commands.execute('docmanager:open', {
+        path: widget.context.path,
+        factory: 'Editor',
+        options: {
+          mode: 'tab-after',
+          ref: referenceEditor.id
+        }
+      })) as Widget | null;
+    } else {
+      const currentEditorBar = findTabBarForWidget(dock, editor);
+      const targetEditorBar = findTabBarForWidget(dock, referenceEditor);
+      if (currentEditorBar !== targetEditorBar) {
+        shell.add(editor, 'main', {
+          mode: 'tab-after',
+          ref: referenceEditor.id
+        });
+      }
+    }
+  } else {
+    // No two-panel layout exists yet (e.g. first model opened, or single panel)
+    if (!editor) {
+      // Open the editor and split left relative to widget
+      editor = (await commands.execute('docmanager:open', {
+        path: widget.context.path,
+        factory: 'Editor',
+        options: {
+          mode: 'split-left',
+          ref: widget.id
+        }
+      })) as Widget | null;
+    } else {
+      // Editor is already open; check if it's already in a separate panel
+      const eBar = findTabBarForWidget(dock, editor);
+      const vBar = findTabBarForWidget(dock, widget);
+      if (!eBar || !vBar || eBar === vBar) {
+        shell.add(editor, 'main', {
+          mode: 'split-left',
+          ref: widget.id
+        });
+      }
+    }
+  }
+
+  if (editor) {
+    widget.setEditorWidget(editor);
+  }
+}
+
+
+/**
  * Initialization data for the jupyterlab-dyno extension.
  */
 const plugin: JupyterFrontEndPlugin<IWidgetTracker<DynareWidget>> = {
@@ -1678,7 +1869,7 @@ const plugin: JupyterFrontEndPlugin<IWidgetTracker<DynareWidget>> = {
       console.error('Error registering language modes:', error);
     }
     
-    const { commands, shell } = app;
+    const { shell } = app;
     // Tracker
     const namespace = 'jupyterlab-dyno';
     const tracker = new WidgetTracker<DynareWidget>({ namespace });
@@ -1697,10 +1888,41 @@ const plugin: JupyterFrontEndPlugin<IWidgetTracker<DynareWidget>> = {
         current.update();
       }
     });
-    // Track split state
-    let splitDone = false;
-    let leftEditorRefId: string | null = null;
-    let rightViewerRefId: string | null = null;
+
+    // When switching current widget update panel values
+    tracker.currentChanged.connect(() => {
+      const current = tracker.currentWidget;
+      if (current) {
+        const opts = fileOptions.get(current.context.path);
+        optionsPanel.setOptions(opts);
+      }
+    });
+
+    /**
+     * Load the settings for this extension
+     *
+     * @param setting Extension settings
+     */
+    function loadSetting(setting: ISettingRegistry.ISettings): void {
+      global_setting = setting.composite as any;
+      preserveScrollPosition =
+        (setting.get('preserve-scroll-position').composite as boolean) ?? true;
+      console.log('Settings loaded:', {
+        preserveScrollPosition,
+        global_setting
+      });
+    }
+
+    /**
+     * Wait for settings to be loaded and display them in console
+     */
+    settings.load(PLUGIN_ID).then(setting => {
+      // Read the settings
+      loadSetting(setting);
+
+      // Listen for setting changes using Signal
+      setting.changed.connect(loadSetting);
+    });
 
     // State restoration: reopen document if it was open previously
     if (restorer) {
@@ -1719,23 +1941,24 @@ const plugin: JupyterFrontEndPlugin<IWidgetTracker<DynareWidget>> = {
       {
         name: FACTORY,
         fileTypes: ['mod', 'dyno', 'dynoYAML'],
-        defaultFor: ['mod','dynare.mod', 'dyno', 'dynoYAML']
+        defaultFor: ['mod', 'dynare.mod', 'dyno', 'dynoYAML']
       },
       rendermime,
       servicemanager
     );
 
     // Add widget to tracker when created
-    widgetFactory.widgetCreated.connect(async (sender, widget) => {
+    widgetFactory.widgetCreated.connect((sender, widget) => {
       // Make the widget globally accessible for debugging
       (window as any).currentDynoWidget = widget;
       console.log('[DEBUG] Widget is now accessible as window.currentDynoWidget');
-      
+
       // Notify instance tracker if restore data needs to be updated
       widget.context.pathChanged.connect(() => {
         tracker.save(widget);
       });
       tracker.add(widget);
+
       // Add toolbar buttons
       const rerunButton = new ToolbarButton({
         label: 'Re-run',
@@ -1763,80 +1986,10 @@ const plugin: JupyterFrontEndPlugin<IWidgetTracker<DynareWidget>> = {
       widget.toolbar.insertItem(0, 'rerun', rerunButton);
       widget.toolbar.insertItem(1, 'clear', clearButton);
       widget.toolbar.insertItem(2, 'options', optionsButton);
-      // When switching current widget update panel values
-      tracker.currentChanged.connect(() => {
-        const current = tracker.currentWidget;
-        if (current) {
-          const opts = fileOptions.get(current.context.path);
-          optionsPanel.setOptions(opts);
-        }
-      });
 
-      // Reset split state when all widgets are closed
-      widget.disposed.connect(() => {
-        if (tracker.size === 0) {
-          splitDone = false;
-          leftEditorRefId = null;
-          rightViewerRefId = null;
-        }
-      });
-
-      // Split layout on first open, then tab into panels
-      if (!splitDone) {
-        const editor = await commands.execute('docmanager:open', {
-          path: widget.context.path,
-          factory: 'Editor',
-          options: { mode: 'split-left', ref: widget.id }
-        });
-        splitDone = true;
-        leftEditorRefId = editor.id;
-        rightViewerRefId = widget.id;
-        
-        // Store editor reference in the widget for highlighting
-        widget.setEditorWidget(editor);
-      } else {
-        if (rightViewerRefId) {
-          shell.add(widget, 'main', {
-            mode: 'tab-after',
-            ref: rightViewerRefId
-          });
-        }
-        if (leftEditorRefId) {
-          const editor = await commands.execute('docmanager:open', {
-            path: widget.context.path,
-            factory: 'Editor',
-            options: { mode: 'tab-after', ref: leftEditorRefId }
-          });
-          
-          // Store editor reference in the widget for highlighting
-          widget.setEditorWidget(editor);
-        }
-      }
-
-      /**
-       * Load the settings for this extension
-       *
-       * @param setting Extension settings
-       */
-      function loadSetting(setting: ISettingRegistry.ISettings): void {
-        global_setting = setting.composite as any;
-        preserveScrollPosition = (setting.get('preserve-scroll-position')
-          .composite as boolean) ?? true;
-        console.log('Settings loaded:', { 
-          preserveScrollPosition, 
-          global_setting 
-        });
-      }
-
-      /**
-       * Wait for settings to be loaded and display them in console
-       */
-      settings.load(PLUGIN_ID).then(setting => {
-        // Read the settings
-        loadSetting(setting);
-
-        // Listen for setting changes using Signal
-        setting.changed.connect(loadSetting);
+      // Open and position editor in side-by-side panel
+      openAndPositionEditor(app, tracker, widget).catch(error => {
+        console.error('Error opening and positioning editor:', error);
       });
     });
 

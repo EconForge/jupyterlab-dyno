@@ -28,3 +28,6 @@ i[~] <- delta*k[~]
 c[~] <- y[~]-i[~]
 
 epsilon[t] <- N(0,0.001)
+
+@run: check
+@run: stoch_simul

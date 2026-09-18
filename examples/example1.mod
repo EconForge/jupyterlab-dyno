@@ -61,7 +61,7 @@ u = 0;
 end;
 
 shocks;
-var e; stderr 0.009;
+var e; stderr 0.008;
 var u; stderr 0.009;
 var e, u = phi*0.009*0.0090;
 end;

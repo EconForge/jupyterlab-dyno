@@ -1,5 +1,5 @@
 [workspace]
-channels = ["conda-forge", "https://repo.prefix.dev/econforge"]
+channels = ["https://repo.prefix.dev/econforge", "conda-forge"]
 platforms = ["linux-64"]
 preview = ["pixi-build"]
 
@@ -9,13 +9,14 @@ watch = "jlpm watch & jupyter lab"
 
 [dependencies]
 jupyterlab = ">=4.0.0,<5"
-jupyterlab_dyno = { path = "." }
+jupyterlab-dyno = { path = "." }
 nodejs = ">=24.4.0,<24.5"
 jupyterlab-myst = ">=2.4.2,<3"
 
+
 [package]
 name = "jupyterlab-dyno"
-version = "0.0.3.2"
+version = "0.0.3.5"
 
 [package.build]
 backend = { name = "pixi-build-python", version = "*" }
@@ -27,10 +28,7 @@ hatch-jupyter-builder = ">=0.5.0"
 nodejs = ">=24.4.0,<24.5"
 jupyterlab = ">=4.0.0,<5"
 
-
 [package.run-dependencies]
-# dyno = { path = "/home/pablo/Econforge/dyno.py"}
-#dyno = ">=0.1.5.dev7"
-dyno = ">=0.1.7"
+dyno = ">=0.1.8"
 xeus-python = ">=0.18"
 nlohmann_json = "==3.12"

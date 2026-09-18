@@ -36,3 +36,7 @@ shocks;
 var epsilon; stderr .009;
 var leta; stderr .001;
 end;
+
+check;
+
+stoch_simul;

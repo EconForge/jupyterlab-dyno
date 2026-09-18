@@ -6,6 +6,7 @@ output
 lib/
 node_modules/
 *.log
+junit.xml
 .eslintcache
 .stylelintcache
 *.egg-info/
