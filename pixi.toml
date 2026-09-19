@@ -30,7 +30,7 @@ nodejs = ">=24.4.0,<24.5"
 jupyterlab = ">=4.0.0,<5"
 
 [package.run-dependencies]
-dyno = ">=0.1.8"
+dyno = ">=0.1.10"
 xeus-python = ">=0.18"
 nlohmann_json = "==3.12"
 jupyterlab-myst = ">=2.4.2,<3"
