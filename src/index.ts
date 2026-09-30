@@ -225,6 +225,16 @@ export class DynareWidget
     const perFile = dynoFileOptionsRegistry.get(this.context.path) || {};
     const merged = { ...global_setting, ...perFile };
 
+    // 'myst': dyno renders the MyST report to HTML in the kernel.
+    // 'jlab_myst' (not offered in the settings): send MyST markdown and let
+    // jupyterlab-myst render it, which can't be installed on wasm (#13).
+    // Settings saved before 'myst' existed still say 'markdown'.
+    if (!merged.output_type || merged.output_type === 'markdown') {
+      merged.output_type = 'myst';
+    } else if (merged.output_type === 'jlab_myst') {
+      merged.output_type = 'markdown';
+    }
+
     if (typeof merged.display_graph !== 'boolean') {
       merged.display_graph = true;
     }
