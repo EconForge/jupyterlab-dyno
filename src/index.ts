@@ -250,7 +250,7 @@ from dyno.report import dsge_report
 filename = '${path}'
 txt = '''${data}'''
 _res = dsge_report(txt=txt, filename=filename, **options)
-if _res is not None and str(options.get('output_type', 'markdown')).lower() != 'markdown':
+if _res is not None and str(options.get('output_type', 'myst')).lower() not in ('markdown', 'myst'):
     if hasattr(_res, 'display'):
         _res.display()
     else:

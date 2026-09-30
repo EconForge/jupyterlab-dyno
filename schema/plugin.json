@@ -27,9 +27,9 @@
     "output_type": {
       "type": "string",
       "title": "Output Type",
-      "description": "Type of output to generate (e.g., markdown, html, etc.)",
-      "enum": ["markdown", "html","text"],
-      "default": "markdown"
+      "description": "Type of output to generate. 'myst' renders the MyST report to HTML in the kernel; 'markdown' leaves MyST rendering to the frontend (needs jupyterlab-myst).",
+      "enum": ["myst", "markdown", "html", "text"],
+      "default": "myst"
     },
     "check_output": {
       "type": "boolean",
