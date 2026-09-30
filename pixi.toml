@@ -20,7 +20,7 @@ version = "0.1.0"
 
 [package.build]
 backend = { name = "pixi-build-python", version = "*" }
-build-number = 0
+build-number = 1
 
 [package.build.config]
 noarch = true
@@ -33,5 +33,5 @@ nodejs = ">=24.4.0,<24.5"
 jupyterlab = ">=4.0.0,<5"
 
 [package.run-dependencies]
-dyno = ">=0.1.10"
+dyno = ">=0.1.11"
 xeus-python = ">=0.19"
