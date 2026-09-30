@@ -42,6 +42,18 @@
       "title": "Display Graph",
       "description": "If enabled, graph outputs are displayed in Dyno reports.",
       "default": true
+    },
+    "show-toolbar": {
+      "type": "boolean",
+      "title": "Show Preview Toolbar",
+      "description": "If enabled, the Dyno preview panel shows a toolbar with Re-run, Clear and Options buttons.",
+      "default": false
+    },
+    "show-options-panel": {
+      "type": "boolean",
+      "title": "Show Options Panel",
+      "description": "If enabled, the 'Dyno Options' panel is added to the right sidebar.",
+      "default": false
     }
   },
   "additionalProperties": false

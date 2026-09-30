@@ -45,6 +45,8 @@ import { EditorView, Decoration } from '@codemirror/view';
 // Default settings, see schema/plugin.json for more details
 let global_setting = {};
 let preserveScrollPosition = true;
+let showToolbar = false;
+let showOptionsPanel = false;
 // Exported registry for per-file options (populated in activate)
 const dynoFileOptionsRegistry: Map<string, any> = new Map();
 
@@ -1878,8 +1880,23 @@ const plugin: JupyterFrontEndPlugin<IWidgetTracker<DynareWidget>> = {
   const optionsPanel = new DynoOptionsPanel();
   // Map path -> options (reuse global registry for render access)
   const fileOptions = dynoFileOptionsRegistry as Map<string, IDynoFileOptions>;
-  // Place options panel on the right side instead of left
-  shell.add(optionsPanel, 'right', { rank: 800 });
+  // Show/hide the options panel in the right sidebar (controlled by settings)
+  const attachOptionsPanel = () => {
+    if (!optionsPanel.isAttached) {
+      shell.add(optionsPanel, 'right', { rank: 800 });
+    }
+  };
+  const applyOptionsPanelVisibility = () => {
+    if (showOptionsPanel) {
+      attachOptionsPanel();
+    } else if (optionsPanel.isAttached) {
+      optionsPanel.close();
+    }
+  };
+  // Show/hide the toolbar of every open preview widget (controlled by settings)
+  const applyToolbarVisibility = (widget: DynareWidget) => {
+    widget.toolbar.setHidden(!showToolbar);
+  };
     optionsPanel.changed.connect((sender, opts) => {
       const current = tracker.currentWidget;
       if (current) {
@@ -1907,8 +1924,15 @@ const plugin: JupyterFrontEndPlugin<IWidgetTracker<DynareWidget>> = {
       global_setting = setting.composite as any;
       preserveScrollPosition =
         (setting.get('preserve-scroll-position').composite as boolean) ?? true;
+      showToolbar = (setting.get('show-toolbar').composite as boolean) ?? false;
+      showOptionsPanel =
+        (setting.get('show-options-panel').composite as boolean) ?? false;
+      applyOptionsPanelVisibility();
+      tracker.forEach(applyToolbarVisibility);
       console.log('Settings loaded:', {
         preserveScrollPosition,
+        showToolbar,
+        showOptionsPanel,
         global_setting
       });
     }
@@ -1978,14 +2002,15 @@ const plugin: JupyterFrontEndPlugin<IWidgetTracker<DynareWidget>> = {
         label: 'Options',
         tooltip: 'Reveal Dyno Options sidebar',
         onClick: () => {
-          // Activate or add to right area
-          const area = app.shell;
-          area.activateById(optionsPanel.id);
+          // Add to right area if needed, then activate
+          attachOptionsPanel();
+          app.shell.activateById(optionsPanel.id);
         }
       });
       widget.toolbar.insertItem(0, 'rerun', rerunButton);
       widget.toolbar.insertItem(1, 'clear', clearButton);
       widget.toolbar.insertItem(2, 'options', optionsButton);
+      applyToolbarVisibility(widget);
 
       // Open and position editor in side-by-side panel
       openAndPositionEditor(app, tracker, widget).catch(error => {

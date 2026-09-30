@@ -246,3 +246,19 @@
 [data-jp-theme-light] .cm-editor .cm-line .cm-meta {
   color: #800080;
 }
+
+/* Hide unwanted MyST frontmatter title/block in report pane */
+.jupyterlab-dyno .myst-fm-block,
+.jupyterlab-dyno #skip-to-frontmatter,
+.jupyterlab-dyno .myst-fm-block-title {
+  display: none !important;
+}
+
+/* The output area already scrolls; do not let individual rendered outputs
+   become nested scroll containers (a 1px overflow otherwise shows a second,
+   useless scrollbar next to the main one). */
+.jupyterlab-dyno .jp-OutputArea .jp-OutputArea-output {
+  overflow: visible;
+  /* JupyterLab's rendered HTML has padding-right: 20px; mirror it on the left */
+  padding-left: 20px;
+}
