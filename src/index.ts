@@ -32,7 +32,8 @@ import {
 import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin,
-  ILayoutRestorer
+  ILayoutRestorer,
+  ILabShell
 } from '@jupyterlab/application';
 import { DynoOptionsPanel, IDynoFileOptions } from './sidebar';
 import { ToolbarButton } from '@jupyterlab/apputils';
@@ -1102,7 +1103,15 @@ if _res is not None and str(options.get('output_type', 'markdown')).lower() != '
    */
   setEditorWidget(editorWidget: any): void {
     console.log('[DEBUG] setEditorWidget called with:', editorWidget);
+    // Stop following the previous editor, if any
+    if (this._editorWidget?.disposed) {
+      this._editorWidget.disposed.disconnect(this._onEditorDisposed, this);
+    }
     this._editorWidget = editorWidget;
+    // Close this preview when its editor is closed
+    if (editorWidget?.disposed) {
+      editorWidget.disposed.connect(this._onEditorDisposed, this);
+    }
     
     // Set the correct MIME type for the editor immediately
     this._setEditorMimeType();
@@ -1549,8 +1558,21 @@ if _res is not None and str(options.get('output_type', 'markdown')).lower() != '
 
 
 
+  /**
+   * Close this preview once its associated editor has been closed.
+   */
+  private _onEditorDisposed(): void {
+    this._editorWidget = null;
+    if (!this.isDisposed) {
+      this.close();
+    }
+  }
+
   // Dispose of resources held by the widget
   dispose(): void {
+    if (this._editorWidget?.disposed) {
+      this._editorWidget.disposed.disconnect(this._onEditorDisposed, this);
+    }
     // Clear any line highlights
     this.clearHighlights();
     
@@ -1814,6 +1836,46 @@ export async function openAndPositionEditor(
 
 
 /**
+ * When the user switches to a Dyno preview, reveal its editor tab in the
+ * other dock area (and vice versa), without stealing keyboard focus.
+ */
+export function revealCompanionWidget(
+  tracker: WidgetTracker<DynareWidget>,
+  current: Widget | null
+): void {
+  if (!current || current.isDisposed) {
+    return;
+  }
+
+  let companion: Widget | null = null;
+  if (tracker.has(current)) {
+    companion = (current as DynareWidget).editorWidget;
+  } else {
+    const viewer = tracker.find(w => w.editorWidget === current);
+    companion = viewer ?? null;
+  }
+  if (!companion || companion.isDisposed || !companion.isAttached) {
+    return;
+  }
+
+  const dock = current.parent as DockPanel | null;
+  if (!dock || companion.parent !== dock) {
+    return;
+  }
+
+  // Only switch tabs when the two widgets live in different tab areas;
+  // otherwise selecting the companion would hide the widget the user picked.
+  const currentBar = findTabBarForWidget(dock, current);
+  const companionBar = findTabBarForWidget(dock, companion);
+  if (!currentBar || !companionBar || currentBar === companionBar) {
+    return;
+  }
+  if (companionBar.currentTitle !== companion.title) {
+    dock.selectWidget(companion);
+  }
+}
+
+/**
  * Initialization data for the jupyterlab-dyno extension.
  */
 const plugin: JupyterFrontEndPlugin<IWidgetTracker<DynareWidget>> = {
@@ -1822,13 +1884,14 @@ const plugin: JupyterFrontEndPlugin<IWidgetTracker<DynareWidget>> = {
   autoStart: true,
   provides: IDynareTracker,
   requires: [ILayoutRestorer, IRenderMimeRegistry, ISettingRegistry, IEditorLanguageRegistry],
-  optional: [],
+  optional: [ILabShell],
   activate: (
     app: JupyterFrontEnd,
     restorer: ILayoutRestorer,
     rendermime: IRenderMimeRegistry,
     settings: ISettingRegistry,
-    editorLanguages: IEditorLanguageRegistry
+    editorLanguages: IEditorLanguageRegistry,
+    labShell: ILabShell | null
   ): IWidgetTracker<DynareWidget> => {
     console.log('JupyterLab extension jupyterlab-dyno is activated!');
     
@@ -1905,6 +1968,14 @@ const plugin: JupyterFrontEndPlugin<IWidgetTracker<DynareWidget>> = {
         current.update();
       }
     });
+
+    // Keep the preview and its editor tabs in sync across the two dock areas:
+    // focusing one brings the companion to the front of its own tab area.
+    if (labShell) {
+      labShell.currentChanged.connect((sender, args) => {
+        revealCompanionWidget(tracker, args.newValue);
+      });
+    }
 
     // When switching current widget update panel values
     tracker.currentChanged.connect(() => {
