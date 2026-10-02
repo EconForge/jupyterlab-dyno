@@ -1,0 +1,62 @@
+# A first dyno model: parameters and calibration.
+#
+# Optional, before `steps:`, a title page that fades into JupyterLab:
+#   title: <text>
+#   subtitle: <text>
+#
+# Each step does one thing. Available actions (see run-scripts.spec.ts):
+#   say: <subtitle>        show a subtitle (optional `hold:` seconds, default 2.5)
+#   new_file: <name>       create an empty file from the file browser
+#   open: <name>           double-click a file (editor + preview)
+#   type: <text>           type in the editor
+#   key: <keys>            press keys, e.g. Control+Home, or a list of keys
+#   select: <text>         select the first occurrence of <text> in the editor
+#   save: true             save the file (Ctrl+S)
+#   goto: end | <text>     move the cursor to the end of the file, or of the
+#                          line containing <text>
+#   replace: <text>        select <text> in the editor and type `with:` instead
+#   click: <text>          click on a section title (or some text) in the preview
+#   scroll_to: <text>      scroll the preview to <text> (or a CSS selector: .dyno-plot)
+#                          (optional `align: start` puts it at the top)
+#   expect: <text>         wait until <text> is visible in the preview
+#   wait: <seconds>        pause
+#   walk: <seconds>        the dyno walks to the sunset, below the subtitle
+#   dump: <label>          (development) save the preview's text and HTML
+
+steps:
+  - say: Let me create an empty .dyno file.
+  - new_file: model.dyno
+
+  - say: When I double click on it, it opens two views.
+  - open: model.dyno
+  - wait: 1.5
+
+  - say: On the left hand side, I can edit the model.
+  - say: Let's create a parameter beta.
+    hold: 1
+  - type: beta <- 0.9
+  - select: '<-'
+  - say: The arrow <- denotes an assignment.
+    hold: 3
+  - key: End
+
+  - say: Let's define a second parameter r.
+    hold: 1
+  - key: Control+Home
+  - type: r <- 1/beta
+  - key: Enter
+  - save: true
+  - wait: 3
+
+  - say: 'Oops: definitions are evaluated in order!'
+    hold: 3
+  - say: Let's move it to the second line.
+    hold: 1
+  - key: [ArrowUp, Alt+ArrowDown]
+  - save: true
+
+  - say: Now check out the preview panel.
+  - click: Calibration
+  - expect: beta
+  - say: Both parameters are now defined.
+    hold: 4

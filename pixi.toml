@@ -35,3 +35,14 @@ jupyterlab = ">=4.0.0,<5"
 [package.run-dependencies]
 dyno = ">=0.1.12"
 xeus-python = ">=0.19"
+
+[feature.video.dependencies]
+ffmpeg = "*"
+
+[feature.video.tasks]
+video-setup = { cmd = "jlpm install && jlpm playwright install chromium && jupyter labextension develop .. --overwrite", cwd = "ui-tests" }
+video = { cmd = "jlpm playwright test -c playwright.videos.config.js", cwd = "ui-tests", depends-on = ["video-setup"] }
+video-mp4 = { cmd = "bash videos/to-mp4.sh", cwd = "ui-tests", depends-on = ["video"] }
+
+[environments]
+video = ["video"]

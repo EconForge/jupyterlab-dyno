@@ -19,6 +19,14 @@ jupyterlab_dyno/_version.py
 # Integration tests
 ui-tests/test-results/
 ui-tests/playwright-report/
+*.mp4
+
+# Pixi lockfile
+pixi.lock
+
+# Local IDE & scratch files
+.claude/
+_*.dyno
 
 # Created by https://www.gitignore.io/api/python
 # Edit at https://www.gitignore.io/?templates=python

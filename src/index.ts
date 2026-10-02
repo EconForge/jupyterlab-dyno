@@ -6,7 +6,6 @@ import {
   IDocumentWidget
 } from '@jupyterlab/docregistry';
 
-import { ActivityMonitor } from '@jupyterlab/coreutils';
 
 import { IWidgetTracker, WidgetTracker } from '@jupyterlab/apputils';
 
@@ -19,7 +18,7 @@ import { DockPanel, TabBar, Widget } from '@lumino/widgets';
 
 import { SessionContext } from '@jupyterlab/apputils';
 
-import { KernelMessage, ServiceManager } from '@jupyterlab/services';
+import { ServiceManager } from '@jupyterlab/services';
 
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
@@ -48,6 +47,8 @@ let global_setting = {};
 let preserveScrollPosition = true;
 let showToolbar = false;
 let showOptionsPanel = false;
+let refreshDelay = 200;
+let errorRefreshDelay = 1000;
 // Exported registry for per-file options (populated in activate)
 const dynoFileOptionsRegistry: Map<string, any> = new Map();
 
@@ -62,9 +63,9 @@ const MIME_TYPE = 'text/mod';
 const CLASS_NAME = 'jupyterlab-dyno';
 
 /**
- * Timeout between modification and render in milliseconds
+ * Mime type of the hidden output carrying the status of a render
  */
-const RENDER_TIMEOUT = 10;
+const STATUS_MIME_TYPE = 'application/vnd.jupyterlab-dyno.status+json';
 
 /**
  * Link to Plotly's CDN, used to render IRFs
@@ -118,11 +119,7 @@ export class DynareWidget
           this._showInitialLoading();
         }
         
-        this._monitor = new ActivityMonitor({
-          signal: this.context.model.contentChanged,
-          timeout: RENDER_TIMEOUT
-        });
-        this._monitor.activityStopped.connect(this.update, this);
+        this.context.model.contentChanged.connect(this._onContentChanged, this);
       });
     });
     const js = document.createElement('script');
@@ -133,19 +130,48 @@ export class DynareWidget
     this._showInitialLoading();
   }
 
+  /**
+   * Restart the refresh timer on every edit, and drop any error report
+   * waiting to be displayed: it is about to be superseded.
+   */
+  private _onContentChanged(): void {
+    this._lastEditTime = performance.now();
+    this._editGeneration++;
+    this._clearErrorTimer();
+    if (this._refreshTimer !== null) {
+      clearTimeout(this._refreshTimer);
+    }
+    this._refreshTimer = window.setTimeout(() => {
+      this._refreshTimer = null;
+      this.update();
+    }, refreshDelay);
+  }
+
+  private _clearErrorTimer(): void {
+    if (this._errorTimer !== null) {
+      clearTimeout(this._errorTimer);
+      this._errorTimer = null;
+    }
+  }
+
   protected onUpdateRequest(): void {
     if (this._renderPending) {
+      // Render again once the current one is done, with the latest content
+      this._rerunRequested = true;
       return;
     }
     this._renderPending = true;
-    
-    void this._renderModel().then(() => {
-      this._renderPending = false;
-      this._isFirstRender = false;
-    }).catch(() => {
-      this._renderPending = false;
-      this._isFirstRender = false;
-    });
+    this._rerunRequested = false;
+
+    void this._renderModel()
+      .catch(reason => console.error(reason))
+      .then(() => {
+        this._renderPending = false;
+        this._isFirstRender = false;
+        if (this._rerunRequested && !this.isDisposed) {
+          this.update();
+        }
+      });
   }
   
   /**
@@ -204,16 +230,9 @@ export class DynareWidget
       this._isFirstRender = false;
     }
     
-    // Clear any existing highlights from previous runs
-    this.clearHighlights();
-    
-    // Preserve scroll position of the output panel across re-renders (if enabled)
-    const container = this.content.node;
-    const prevScrollTop = preserveScrollPosition ? container.scrollTop : 0;
-    const prevScrollLeft = preserveScrollPosition ? container.scrollLeft : 0;
-    const prevScrollableHeight = preserveScrollPosition
-      ? Math.max(0, container.scrollHeight - container.clientHeight)
-      : 0;
+    const generation = this._editGeneration;
+    this._pendingHighlights = [];
+
     // Use the document path to branch behavior by file type
     const path = this.context.path.toLowerCase();
     
@@ -223,7 +242,9 @@ export class DynareWidget
     console.log(global_setting);
     // Merge global settings with per-file options if any
     const perFile = dynoFileOptionsRegistry.get(this.context.path) || {};
-    const merged = { ...global_setting, ...perFile };
+    const merged: any = { ...global_setting, ...perFile };
+    delete merged['refresh-delay'];
+    delete merged['error-refresh-delay'];
 
     // 'myst': dyno renders the MyST report to HTML in the kernel.
     // 'jlab_myst' (not offered in the settings): send MyST markdown and let
@@ -265,7 +286,9 @@ if _res is not None and str(options.get('output_type', 'myst')).lower() not in (
         _res.display()
     else:
         from IPython.display import display
-        display(_res)`;
+        display(_res)
+from IPython.display import display as _dyno_display
+_dyno_display({'${STATUS_MIME_TYPE}': {'has_errors': bool(getattr(_res, 'errors', None))}}, raw=True)`;
 
     // Execute in a hidden output area to avoid clearing the visible output unnecessarily
     const tempModel = new OutputAreaModel({ trusted: true });
@@ -279,79 +302,123 @@ if _res is not None and str(options.get('output_type', 'myst')).lower() not in (
     // Register comm handler after we're sure the kernel is ready (just before execution)
     this._setupHighlightingComm();
 
-    OutputArea.execute(code, tempArea, this._sessionContext)
-      .then((msg: KernelMessage.IExecuteReplyMsg | undefined) => {
-        const end = performance.now();
-        const nextOutputs = this._safeToJSON(tempModel);
+    let failed = false;
+    try {
+      const reply = await OutputArea.execute(
+        code,
+        tempArea,
+        this._sessionContext
+      );
+      failed = reply?.content.status === 'error';
+      console.log(
+        `Took ${performance.now() - start} milliseconds to render file`
+      );
+    } catch (reason) {
+      failed = true;
+      console.error(reason);
+      console.log(
+        `Took ${performance.now() - start} milliseconds to show error message file`
+      );
+    }
 
-        console.log(`Took ${end - start} milliseconds to render file`);
+    const allOutputs = this._safeToJSON(tempModel);
+    tempArea.dispose();
+    if (!allOutputs) {
+      return;
+    }
+    let hasErrors = failed;
+    const nextOutputs = allOutputs.filter(out => {
+      const status = out.data?.[STATUS_MIME_TYPE];
+      if (status) {
+        hasErrors = hasErrors || !!status.has_errors;
+        return false;
+      }
+      hasErrors = hasErrors || out.output_type === 'error';
+      return true;
+    });
 
-        // const same = this._outputsEqual(prevOutputs, nextOutputs);
-        // if (!same && nextOutputs) {
-        //   // Update visible model only if content changed
-        //   this._applyOutputsToVisibleModel(nextOutputs);
-        // }
-        if (nextOutputs) {
-          this._applyOutputsToVisibleModel(nextOutputs);
-          
-          // Note: highlighting is now handled via comm, not from outputs
-          // Keep the fallback for backward compatibility
-          console.log('[DEBUG] About to call _performHighlightingBasedOnResults with outputs:', nextOutputs);
-          this._performHighlightingBasedOnResults(nextOutputs);
-        }
-
-        // Restore scroll position after DOM/content updates
-        if (preserveScrollPosition) {
-          // Use two RAFs to ensure layout and rendering have settled
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              const newScrollableHeight = Math.max(
-                0,
-                container.scrollHeight - container.clientHeight
-              );
-              const ratio = prevScrollableHeight
-                ? prevScrollTop / prevScrollableHeight
-                : 0;
-              const targetTop = Math.min(
-                newScrollableHeight,
-                Math.round(ratio * newScrollableHeight)
-              );
-              // Prefer exact restoration when possible
-              const preciseTop = Math.min(newScrollableHeight, prevScrollTop);
-              container.scrollTo({
-                top: newScrollableHeight > 0 ? preciseTop : 0,
-                left: prevScrollLeft,
-                behavior: 'auto'
-              });
-              // If content height changed significantly, fall back to ratio-based position
-              if (Math.abs(newScrollableHeight - prevScrollableHeight) > 5) {
-                container.scrollTo({ top: targetTop, left: prevScrollLeft });
-              }
-            });
-          });
-        }
-      })
-      .catch(reason => {
-        const end = performance.now();
-        console.error(reason);
-        console.log(
-          `Took ${end - start} milliseconds to show error message file`
+    const display = () => {
+      this._errorTimer = null;
+      // Preserve scroll position of the output panel across re-renders (if enabled)
+      const container = this.content.node;
+      const prevScrollTop = container.scrollTop;
+      const prevScrollLeft = container.scrollLeft;
+      const prevScrollableHeight = Math.max(
+        0,
+        container.scrollHeight - container.clientHeight
+      );
+      this.clearHighlights();
+      this._applyOutputsToVisibleModel(nextOutputs);
+      // Note: highlighting is now handled via comm, not from outputs
+      // Keep the fallback for backward compatibility
+      this._performHighlightingBasedOnResults(nextOutputs);
+      for (const data of this._pendingHighlights) {
+        this._applyHighlightingData(data);
+      }
+      this._pendingHighlights = [];
+      if (preserveScrollPosition) {
+        this._restoreScroll(
+          prevScrollTop,
+          prevScrollLeft,
+          prevScrollableHeight
         );
-        // On error, propagate the error outputs to visible model
-        const nextOutputs = this._safeToJSON(tempModel);
-        if (nextOutputs) {
-          this._applyOutputsToVisibleModel(nextOutputs);
+      }
+    };
+
+    this._clearErrorTimer();
+    if (!hasErrors) {
+      display();
+      return;
+    }
+    // Hold error reports back until the user has stopped typing for a while
+    const wait = errorRefreshDelay - (performance.now() - this._lastEditTime);
+    if (wait <= 0) {
+      display();
+    } else {
+      this._errorTimer = window.setTimeout(() => {
+        if (generation === this._editGeneration) {
+          display();
         }
-        // Attempt to restore previous scroll even on error
-        if (preserveScrollPosition) {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              container.scrollTo({ top: prevScrollTop, left: prevScrollLeft });
-            });
-          });
+      }, wait);
+    }
+  }
+
+  /**
+   * Restore the scroll position of the output panel after a re-render
+   */
+  private _restoreScroll(
+    prevScrollTop: number,
+    prevScrollLeft: number,
+    prevScrollableHeight: number
+  ): void {
+    const container = this.content.node;
+    // Use two RAFs to ensure layout and rendering have settled
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const newScrollableHeight = Math.max(
+          0,
+          container.scrollHeight - container.clientHeight
+        );
+        const ratio = prevScrollableHeight
+          ? prevScrollTop / prevScrollableHeight
+          : 0;
+        const targetTop = Math.min(
+          newScrollableHeight,
+          Math.round(ratio * newScrollableHeight)
+        );
+        // Prefer exact restoration when possible
+        const preciseTop = Math.min(newScrollableHeight, prevScrollTop);
+        container.scrollTo({
+          top: newScrollableHeight > 0 ? preciseTop : 0,
+          left: prevScrollLeft,
+          behavior: 'auto'
+        });
+        // If content height changed significantly, fall back to ratio-based position
+        if (Math.abs(newScrollableHeight - prevScrollableHeight) > 5) {
+          container.scrollTo({ top: targetTop, left: prevScrollLeft });
         }
-        // Note: loading is now handled in onUpdateRequest
       });
+    });
   }
 
   /**
@@ -445,6 +512,15 @@ if _res is not None and str(options.get('output_type', 'myst')).lower() not in (
    * Handle highlighting data received from the kernel via comm
    */
   private _handleHighlightingData(data: any): void {
+    if (this._renderPending) {
+      // Applied together with the outputs of the render that produced them
+      this._pendingHighlights.push(data);
+      return;
+    }
+    this._applyHighlightingData(data);
+  }
+
+  private _applyHighlightingData(data: any): void {
     try {
       console.log('[DEBUG] _handleHighlightingData called');
       
@@ -1589,11 +1665,12 @@ if _res is not None and str(options.get('output_type', 'myst')).lower() not in (
     // Clean up comm targets
     this._cleanupComm();
     
-    // Disconnect activity monitor first
-    if (this._monitor) {
-      this._monitor.dispose();
-      this._monitor = null;
+    // Stop pending refreshes first
+    if (this._refreshTimer !== null) {
+      clearTimeout(this._refreshTimer);
+      this._refreshTimer = null;
     }
+    this._clearErrorTimer();
     
     this.content.dispose();
     
@@ -1625,8 +1702,12 @@ if _res is not None and str(options.get('output_type', 'myst')).lower() not in (
   }
   private _renderPending = false;
   private _sessionContext: SessionContext;
-  private _monitor: ActivityMonitor<DocumentRegistry.IModel, void> | null =
-    null;
+  private _rerunRequested = false;
+  private _refreshTimer: number | null = null;
+  private _errorTimer: number | null = null;
+  private _lastEditTime = 0;
+  private _editGeneration = 0;
+  private _pendingHighlights: any[] = [];
   private _rendermime: IRenderMimeRegistry;
   private _isFirstRender = true;
   /**
@@ -2008,12 +2089,17 @@ const plugin: JupyterFrontEndPlugin<IWidgetTracker<DynareWidget>> = {
       showToolbar = (setting.get('show-toolbar').composite as boolean) ?? false;
       showOptionsPanel =
         (setting.get('show-options-panel').composite as boolean) ?? false;
+      refreshDelay = (setting.get('refresh-delay').composite as number) ?? 200;
+      errorRefreshDelay =
+        (setting.get('error-refresh-delay').composite as number) ?? 1000;
       applyOptionsPanelVisibility();
       tracker.forEach(applyToolbarVisibility);
       console.log('Settings loaded:', {
         preserveScrollPosition,
         showToolbar,
         showOptionsPanel,
+        refreshDelay,
+        errorRefreshDelay,
         global_setting
       });
     }

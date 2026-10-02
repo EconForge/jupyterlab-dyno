@@ -8,11 +8,11 @@ rho <- .9
 chi <- (1-alpha)*(1-nss)^eta/nss*(1/beta-1+delta)/(1/beta-1+delta-delta*alpha)
 
 # equations
-1/c[t] = beta*(r[t+1]+1-delta)/c[t+1]
+1/c[t] = beta*(r[t+1]+1-delta)/c[t+1] :: "euler equation"
 w[t] = chi*c[t]/(1-n[t])^eta
 k[t] = (1-delta)*k[t-1]+i[t]
 y[t] = a[t]*k[t-1]^alpha*n[t]^(1-alpha)
-log( a[t] )  = rho*log(a[t-1]) + epsilon[t]
+log( a[t] )  = rho*log(a[t-1]) + epsilon[t] :: "productivity shock"
 w[t] = (1-alpha)*y[t]/n[t]
 r[t] = alpha*y[t]/k[t-1]
 y[t] = c[t]+i[t]
@@ -29,5 +29,8 @@ c[~] <- y[~]-i[~]
 
 epsilon[t] <- N(0,0.001)
 
-@run: check
-@run: stoch_simul
+@run: variants: {alpha: [0.3, 0.4]}
+@run: check;
+@run: solve;
+@run: simulate;
+@run: plot

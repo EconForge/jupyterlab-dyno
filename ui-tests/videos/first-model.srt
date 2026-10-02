@@ -1,0 +1,39 @@
+1
+00:00:02,483 --> 00:00:06,072
+Let me create an empty .dyno file.
+
+2
+00:00:06,072 --> 00:00:11,115
+When I double click on it, it opens two views.
+
+3
+00:00:11,115 --> 00:00:13,621
+On the left hand side, I can edit the model.
+
+4
+00:00:13,621 --> 00:00:15,658
+Let's create a parameter beta.
+
+5
+00:00:15,658 --> 00:00:18,848
+The arrow <- denotes an assignment.
+
+6
+00:00:18,848 --> 00:00:24,259
+Let's define a second parameter r.
+
+7
+00:00:24,259 --> 00:00:27,261
+Oops: definitions are evaluated in order!
+
+8
+00:00:27,261 --> 00:00:28,625
+Let's move it to the second line.
+
+9
+00:00:28,625 --> 00:00:32,216
+Now check out the preview panel.
+
+10
+00:00:32,216 --> 00:00:36,216
+Both parameters are now defined.

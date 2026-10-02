@@ -1,0 +1,191 @@
+1
+00:00:07,223 --> 00:00:10,888
+Let's create an empty .dyno file.
+
+2
+00:00:10,888 --> 00:00:15,987
+Double-clicking on it opens two views.
+
+3
+00:00:15,987 --> 00:00:18,488
+The model is written on the left.
+
+4
+00:00:18,488 --> 00:00:21,994
+On the right, dyno shows what it understood. It updates while typing.
+
+5
+00:00:21,994 --> 00:00:24,628
+Let's start with a parameter: the discount factor beta.
+
+6
+00:00:24,628 --> 00:00:28,144
+The arrow <- is an assignment: it gives a value to a symbol.
+
+7
+00:00:28,144 --> 00:00:31,984
+A second parameter, the gross interest rate, defined from beta.
+
+8
+00:00:31,984 --> 00:00:35,493
+Assignments are evaluated in order, so r can use beta.
+
+9
+00:00:35,493 --> 00:00:47,931
+Now the equations.
+
+10
+00:00:47,931 --> 00:00:51,934
+Equations use the equal sign. Time is written in brackets: t for today, t-1 for yesterday.
+
+11
+00:00:51,934 --> 00:00:55,937
+There is no list of variables to declare: dyno works it out from the equations.
+
+12
+00:00:55,937 --> 00:01:04,525
+It also noticed that alpha and delta have no value yet.
+
+13
+00:01:04,525 --> 00:01:13,823
+Future values are denoted by t+1.
+
+14
+00:01:13,823 --> 00:01:25,318
+Productivity follows a log-normal AR(1) process, with mean 1.
+
+15
+00:01:25,318 --> 00:01:29,321
+The shock is declared by its distribution: normal, with a standard deviation of 1%.
+
+16
+00:01:29,321 --> 00:01:32,323
+dyno classifies epsilon as exogenous on its own.
+
+17
+00:01:32,323 --> 00:01:42,382
+The system is complete. Equations can be tagged with their name.
+
+18
+00:01:42,382 --> 00:01:51,723
+Arbitrary information can also be attached: here, a tag and a label.
+
+19
+00:01:51,723 --> 00:01:55,245
+The names show up in the report.
+
+20
+00:01:55,245 --> 00:02:05,366
+The tilde stands for the steady state. Let's type rough guesses.
+
+21
+00:02:05,366 --> 00:02:12,471
+Are these guesses right? Let's ask dyno to check the model.
+
+22
+00:02:12,471 --> 00:02:16,479
+They are not: the residuals of the equations are not zero.
+
+23
+00:02:16,479 --> 00:02:21,864
+Rather than solving the steady state by hand, dyno can find it, before the check.
+
+24
+00:02:21,864 --> 00:02:29,630
+The steady state converged, and now all residuals are zero.
+
+25
+00:02:29,630 --> 00:02:39,007
+The steady-state card tells how it was found: algorithm, iterations, final residual.
+
+26
+00:02:39,007 --> 00:02:47,375
+The residuals card lists the residual of each equation.
+
+27
+00:02:47,375 --> 00:02:51,382
+The check also looks at the eigenvalues: the Blanchard-Kahn conditions are met.
+
+28
+00:02:51,382 --> 00:02:57,440
+What if humans were really patient?
+
+29
+00:02:57,440 --> 00:03:01,949
+With beta = 1.08, the Blanchard-Kahn conditions are not met: too many stable roots.
+
+30
+00:03:01,949 --> 00:03:07,627
+Just kidding.
+
+31
+00:03:07,627 --> 00:03:19,206
+@run lines say what to do with the model, in order: here, solve and simulate.
+
+32
+00:03:19,206 --> 00:03:23,214
+simulate computes impulse responses to the shock: here they are, as a table.
+
+33
+00:03:23,214 --> 00:03:35,123
+Commands take options, in YAML syntax: here, a horizon of 100 periods.
+
+34
+00:03:35,123 --> 00:03:40,005
+Now a plot.
+
+35
+00:03:40,005 --> 00:03:44,014
+Here are the impulse responses to a productivity shock.
+
+36
+00:03:44,014 --> 00:03:52,321
+plot takes options too: the variables to show, and the units.
+
+37
+00:03:52,321 --> 00:03:56,329
+Responses are now in log-deviations from the steady state, in percent.
+
+38
+00:03:56,329 --> 00:04:00,770
+Change a parameter, and the whole analysis reruns.
+
+39
+00:04:00,770 --> 00:04:07,796
+A less persistent shock: capital now peaks after 3 periods, instead of 8.
+
+40
+00:04:07,796 --> 00:04:14,942
+A very persistent one: capital keeps building up for 20 periods.
+
+41
+00:04:14,942 --> 00:04:18,949
+With slower depreciation, it builds up for 35 periods.
+
+42
+00:04:18,949 --> 00:04:24,171
+Back to the original values.
+
+43
+00:04:24,171 --> 00:04:32,553
+To compare calibrations, list them in a variants line, before the other commands.
+
+44
+00:04:32,553 --> 00:04:36,055
+Each plot now shows both calibrations.
+
+45
+00:04:36,055 --> 00:04:44,473
+Finally, a semicolon mutes a command: let's keep only the plot.
+
+46
+00:04:44,473 --> 00:04:50,197
+And one more calibration, for good measure.
+
+47
+00:04:50,197 --> 00:04:54,206
+That's a complete model, from an empty file, in about twenty-five lines.
+
+48
+00:04:54,206 --> 00:05:02,203
+Thank you for watching!

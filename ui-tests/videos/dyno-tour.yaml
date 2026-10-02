@@ -1,0 +1,268 @@
+# A tour of dyno: writing a growth model step by step.
+# Plain-language version: dyno-tour.md. Actions: see first-model.yaml.
+
+title: Interactive Modeling in the Browser with Dyno
+subtitle: (5 min)
+
+steps:
+  # 1. An empty model
+  - say: Let's create an empty .dyno file.
+  - new_file: growth.dyno
+  - say: Double-clicking on it opens two views.
+  - open: growth.dyno
+  - wait: 1.5
+  - say: The model is written on the left.
+  - say: On the right, dyno shows what it understood. It updates while typing.
+    hold: 3.5
+
+  # 2. Parameters are assignments
+  - say: "Let's start with a parameter: the discount factor beta."
+    hold: 1.5
+  - type: beta <- 0.96
+  - select: '<-'
+  - say: 'The arrow <- is an assignment: it gives a value to a symbol.'
+    hold: 3.5
+  - goto: end
+  - say: A second parameter, the gross interest rate, defined from beta.
+    hold: 1.5
+  - type: "\nr <- 1/beta"
+  - save: true
+  - click: Calibration
+  - expect: '1.04'
+  - say: Assignments are evaluated in order, so r can use beta.
+    hold: 3.5
+
+  # 3. Equations: just write them
+  - goto: end
+  - say: Now the equations.
+    hold: 1
+  - type: "\n\n# equations\ny[t] = z[t] * k[t-1]^alpha\nk[t] = (1-delta)*k[t-1] + i[t]\nc[t] = y[t] - i[t]"
+  - save: true
+  - wait: 3
+  - say: 'Equations use the equal sign. Time is written in brackets: t for today, t-1 for yesterday.'
+    hold: 4
+  - say: 'There is no list of variables to declare: dyno works it out from the equations.'
+    hold: 4
+  - say: It also noticed that alpha and delta have no value yet.
+    hold: 3
+  - goto: 'r <- 1/beta'
+  - type: "\nalpha <- 0.36\ndelta <- 0.1"
+  - save: true
+  - wait: 3
+
+  # 4. Future values
+  - goto: end
+  - say: 'Future values are denoted by t+1.'
+    hold: 1.5
+  - type: "\nbeta*(c[t]/c[t+1])*(1-delta+alpha*y[t+1]/k[t]) = 1"
+  - save: true
+  - wait: 3
+
+  # 5. Shocks
+  - say: Productivity follows a log-normal AR(1) process, with mean 1.
+    hold: 1.5
+  - goto: end
+  - type: "\nlog(z[t]) = rho*log(z[t-1]) + epsilon[t]\n\nepsilon[t] <- N(0.01)"
+  - goto: 'delta <- 0.1'
+  - type: "\nrho <- 0.9"
+  - save: true
+  - wait: 3
+  - say: 'The shock is declared by its distribution: normal, with a standard deviation of 1%.'
+    hold: 4
+  - say: dyno classifies epsilon as exogenous on its own.
+    hold: 3
+
+  # 6. Tags
+  - say: The system is complete. Equations can be tagged with their name.
+    hold: 1.5
+  - goto: 'y[t] = z[t]'
+  - type: '  :: "Production"'
+  - goto: 'k[t] = (1-delta)'
+  - type: '  :: "Capital accumulation"'
+  - goto: 'c[t] = y[t] - i[t]'
+  - type: '  :: "Resource constraint"'
+  - goto: 'beta*(c[t]'
+  - type: '  :: "Euler equation"'
+  - say: 'Arbitrary information can also be attached: here, a tag and a label.'
+    hold: 1.5
+  - goto: 'log(z[t])'
+  - type: '  :: [ar1, label="Productivity process"]'
+  - save: true
+  - wait: 2
+  - click: Equations
+  - wait: 1
+  - say: The names show up in the report.
+    hold: 3.5
+
+  # 7. Steady state
+  - goto: end
+  - say: 'The tilde stands for the steady state. Let''s type rough guesses.'
+    hold: 1.5
+  - type: "\n\n# steady state\nz[~] <- 1\nk[~] <- 1\ny[~] <- 1\ni[~] <- 0.1\nc[~] <- 0.9"
+  - save: true
+  - wait: 2
+  - say: Are these guesses right? Let's ask dyno to check the model.
+    hold: 1.5
+  - type: "\n\n@run: check"
+  - save: true
+  - scroll_to: Residuals are not zero
+  - click: Residuals are not zero
+  - wait: 1
+  - say: 'They are not: the residuals of the equations are not zero.'
+    hold: 4
+  - say: Rather than solving the steady state by hand, dyno can find it, before the check.
+    hold: 1.5
+  - goto: '@run: check'
+  - key: Home
+  - type: "@run: steady\n"
+  - save: true
+  - scroll_to: Residuals are zero
+  - say: 'The steady state converged, and now all residuals are zero.'
+    hold: 3.5
+  - scroll_to: Steady-state converged
+  - click: Steady-state converged
+  - wait: 1
+  - say: 'The steady-state card tells how it was found: algorithm, iterations, final residual.'
+    hold: 4.5
+  - click: Steady-state converged
+  - wait: 0.5
+  - click: Residuals are zero
+  - scroll_to: Check
+    align: start
+  - say: The residuals card lists the residual of each equation.
+    hold: 4
+  - click: Residuals are zero
+  - click: Blanchard-Kahn conditions are met
+  - scroll_to: Blanchard-Kahn conditions are met
+    align: start
+  - say: 'The check also looks at the eigenvalues: the Blanchard-Kahn conditions are met.'
+    hold: 4
+  - say: What if humans were really patient?
+    hold: 1.5
+  - replace: 'beta <- 0.96'
+    with: 'beta <- 1.08'
+  - save: true
+  - click: Blanchard-Kahn conditions are not met
+  - scroll_to: Blanchard-Kahn conditions are not met
+    align: start
+  - say: 'With beta = 1.08, the Blanchard-Kahn conditions are not met: too many stable roots.'
+    hold: 4.5
+  - say: Just kidding.
+    hold: 1
+  - replace: 'beta <- 1.08'
+    with: 'beta <- 0.96'
+  - save: true
+  - scroll_to: Blanchard-Kahn conditions are met
+  - wait: 1.5
+
+  # 8. Solve and simulate
+  - say: '@run lines say what to do with the model, in order: here, solve and simulate.'
+    hold: 1.5
+  - goto: end
+  - type: "\n@run: solve\n@run: simulate"
+  - save: true
+  - wait: 2
+  - scroll_to: IRFS
+  - click: IRFS
+  - scroll_to: IRFS
+    align: start
+  - say: 'simulate computes impulse responses to the shock: here they are, as a table.'
+    hold: 4
+  - say: 'Commands take options, in YAML syntax: here, a horizon of 100 periods.'
+    hold: 1.5
+  - replace: '@run: simulate'
+    with: '@run: simulate: {T: 100}'
+  - save: true
+  - scroll_to: IRFS
+  - click: IRFS
+  - scroll_to: IRFS
+    align: start
+  - wait: 3
+
+  # 9. Plot
+  - say: Now a plot.
+    hold: 1
+  - goto: end
+  - type: "\n@run: plot"
+  - save: true
+  - scroll_to: .dyno-plot
+  - say: Here are the impulse responses to a productivity shock.
+    hold: 4
+  - say: 'plot takes options too: the variables to show, and the units.'
+    hold: 1.5
+  - replace: '@run: plot'
+    with: '@run: plot: {vars: [y,k,c,z], units: log-deviation}'
+  - save: true
+  - scroll_to: .dyno-plot
+  - say: Responses are now in log-deviations from the steady state, in percent.
+    hold: 4
+
+  # 10. Playing with parameters
+  - say: Change a parameter, and the whole analysis reruns.
+    hold: 1.5
+  - replace: 'rho <- 0.9'
+    with: 'rho <- 0.5'
+  - save: true
+  - scroll_to: .dyno-plot
+  - say: 'A less persistent shock: capital now peaks after 3 periods, instead of 8.'
+    hold: 4
+  - replace: 'rho <- 0.5'
+    with: 'rho <- 0.99'
+  - save: true
+  - scroll_to: .dyno-plot
+  - say: 'A very persistent one: capital keeps building up for 20 periods.'
+    hold: 4
+  - replace: 'delta <- 0.1'
+    with: 'delta <- 0.025'
+  - save: true
+  - scroll_to: .dyno-plot
+  - say: With slower depreciation, it builds up for 35 periods.
+    hold: 4
+  - say: Back to the original values.
+    hold: 1
+  - replace: 'rho <- 0.99'
+    with: 'rho <- 0.9'
+  - replace: 'delta <- 0.025'
+    with: 'delta <- 0.1'
+  - save: true
+  - wait: 3
+
+  # 11. Variants
+  - say: To compare calibrations, list them in a variants line, before the other commands.
+    hold: 1.5
+  - goto: '@run: steady'
+  - key: Home
+  - type: "@run: variants: {rho: [0.5, 0.9]}\n"
+  - save: true
+  - expect: 'Variants: rho=0.5, rho=0.9'
+  - scroll_to: .dyno-plot
+  - wait: 1
+  - say: Each plot now shows both calibrations.
+    hold: 3.5
+
+  # 12. A clean report
+  - say: 'Finally, a semicolon mutes a command: let''s keep only the plot.'
+    hold: 1.5
+  - replace: '@run: steady'
+    with: '@run: steady;'
+  - replace: '@run: check'
+    with: '@run: check;'
+  - replace: '@run: solve'
+    with: '@run: solve;'
+  - replace: '@run: simulate: {T: 100}'
+    with: '@run: simulate: {T: 100};'
+  - save: true
+  - scroll_to: .dyno-plot
+  - wait: 2
+  - say: And one more calibration, for good measure.
+    hold: 1.5
+  - replace: '{rho: [0.5, 0.9]}'
+    with: '{rho: [0.5, 0.9, 0.99]}'
+  - save: true
+  - expect: 'Variants: rho=0.5, rho=0.9, rho=0.99'
+  - scroll_to: .dyno-plot
+  - say: That's a complete model, from an empty file, in about twenty-five lines.
+    hold: 4
+  - say: Thank you for watching!
+    hold: 0.5
+  - walk: 6

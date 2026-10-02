@@ -10,6 +10,20 @@
       "description": "If enabled, the viewer will attempt to preserve its scroll position after re-rendering.",
       "default": true
     },
+    "refresh-delay": {
+      "type": "integer",
+      "title": "Refresh Delay (ms)",
+      "description": "Time without edits before the preview is recomputed.",
+      "minimum": 0,
+      "default": 200
+    },
+    "error-refresh-delay": {
+      "type": "integer",
+      "title": "Error Refresh Delay (ms)",
+      "description": "When the recomputed report contains an error, wait until this long after the last edit before displaying it, so that errors don't flash while typing. Successful reports are displayed as soon as they are ready.",
+      "minimum": 0,
+      "default": 1000
+    },
     "modfile-preprocessor": {
       "type": "string",
       "title": "Modfile Preprocessor",

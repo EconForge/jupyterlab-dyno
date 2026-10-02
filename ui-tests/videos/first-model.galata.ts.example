@@ -1,0 +1,139 @@
+import { expect, test } from '@jupyterlab/galata';
+import type { Page } from '@playwright/test';
+import * as fs from 'fs';
+import * as path from 'path';
+
+/* ------------------------------------------------------------------ */
+/* Small "film-making" helpers                                         */
+/* ------------------------------------------------------------------ */
+
+type Cue = { start: number; end: number; text: string };
+const cues: Cue[] = [];
+let t0 = Date.now();
+
+/**
+ * Show a subtitle at the bottom of the page (it is part of the recording)
+ * and keep it on screen for at least `holdMs`. Also logs a cue for the .srt.
+ */
+async function say(page: Page, text: string, holdMs = 2500) {
+  const start = Date.now() - t0;
+  if (cues.length) {
+    cues[cues.length - 1].end = start;
+  }
+  cues.push({ start, end: start + holdMs, text });
+  await page.evaluate(txt => {
+    let el = document.getElementById('demo-subtitle');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'demo-subtitle';
+      el.style.cssText =
+        'position:fixed;left:50%;bottom:40px;transform:translateX(-50%);' +
+        'max-width:80%;padding:8px 16px;border-radius:6px;z-index:100000;' +
+        'background:rgba(0,0,0,.75);color:white;font:20px sans-serif;' +
+        'text-align:center;pointer-events:none';
+      document.body.appendChild(el);
+    }
+    el.textContent = txt;
+  }, text);
+  await page.waitForTimeout(holdMs);
+}
+
+/** Type like a human, so viewers can follow. */
+async function typeSlowly(page: Page, text: string) {
+  await page.keyboard.type(text, { delay: 90 });
+}
+
+function writeSrt(file: string) {
+  const ts = (ms: number) => {
+    const d = new Date(ms).toISOString(); // 1970-01-01T00:00:01.234Z
+    return `${d.substring(11, 19)},${d.substring(20, 23)}`;
+  };
+  const body = cues
+    .map((c, i) => `${i + 1}\n${ts(c.start)} --> ${ts(c.end)}\n${c.text}\n`)
+    .join('\n');
+  fs.writeFileSync(file, body);
+}
+
+/* ------------------------------------------------------------------ */
+/* The script                                                          */
+/* ------------------------------------------------------------------ */
+
+test('first model: parameters and calibration', async ({ page, tmpPath }) => {
+  t0 = Date.now();
+  await page.filebrowser.openDirectory(tmpPath);
+
+  // "Let me create an empty .dyno file."
+  await say(page, 'Let me create an empty .dyno file.');
+  await page.click('.jp-DirListing-content', { button: 'right' });
+  await page.getByRole('menuitem', { name: 'New File' }).click();
+  // The new file is in rename mode: replace its name.
+  const rename = page.locator('.jp-DirListing-editor');
+  await rename.waitFor();
+  await rename.selectText();
+  await typeSlowly(page, 'model.dyno');
+  await page.keyboard.press('Enter');
+  // JupyterLab asks for confirmation when the extension changes.
+  const accept = page.locator('.jp-Dialog .jp-mod-accept');
+  if (await accept.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await accept.click();
+  }
+
+  // "When I double click on it, it creates two views."
+  await say(page, 'When I double click on it, it opens two views.');
+  await page
+    .locator('.jp-DirListing-item', { hasText: 'model.dyno' })
+    .dblclick();
+  const editor = page.locator('.jp-FileEditor .cm-content').first();
+  const preview = page.locator('.jupyterlab-dyno').first();
+  await expect(editor).toBeVisible();
+  await expect(preview).toBeVisible();
+  // JupyterLab reopens a Launcher whenever the main area is empty: drop it now.
+  await page
+    .locator('.lm-TabBar-tab', { hasText: 'Launcher' })
+    .locator('.lm-TabBar-tabCloseIcon')
+    .click();
+  await page.waitForTimeout(1500);
+
+  // "In the left hand side, I can edit. Let's create a parameter beta <- 0.9"
+  await say(page, 'On the left hand side, I can edit the model.');
+  await editor.click();
+  await say(page, "Let's create a parameter beta.", 1000);
+  await typeSlowly(page, 'beta <- 0.9');
+
+  // "It is an assignment (select <-)"
+  await page.keyboard.press('Home');
+  for (let i = 0; i < 'beta '.length; i++) {
+    await page.keyboard.press('ArrowRight');
+  }
+  await page.keyboard.press('Shift+ArrowRight');
+  await page.keyboard.press('Shift+ArrowRight');
+  await say(page, 'The arrow <- denotes an assignment.', 3000);
+  await page.keyboard.press('End');
+
+  // "Let's define a second parameter r <- 1/beta" ... on the first line.
+  await say(page, "Let's define a second parameter r.", 1000);
+  await page.keyboard.press('Control+Home');
+  await typeSlowly(page, 'r <- 1/beta');
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Control+s');
+  await page.waitForTimeout(3000); // let the preview react
+
+  // "Oups: definition statements are run in order. Let's move it to the second line."
+  await say(page, 'Oops: definitions are evaluated in order!', 3000);
+  await say(page, "Let's move it to the second line.", 1000);
+  await page.keyboard.press('ArrowUp'); // back on the "r <- 1/beta" line
+  await page.keyboard.press('Alt+ArrowDown'); // CodeMirror: move line down
+  await page.keyboard.press('Control+s');
+
+  // "Check out the preview panel. Click on Calibration."
+  await say(page, 'Now check out the preview panel.');
+  const calibration = preview.getByText('Calibration', { exact: true });
+  await expect(calibration).toBeVisible({ timeout: 60_000 });
+  await calibration.click();
+
+  // "The two parameters are defined."
+  await expect(preview.getByText('beta').first()).toBeVisible();
+  await say(page, 'Both parameters are now defined.', 4000);
+
+  writeSrt(path.join(__dirname, 'first-model.srt'));
+});
