@@ -341,6 +341,7 @@ _dyno_display({'${STATUS_MIME_TYPE}': {'has_errors': bool(getattr(_res, 'errors'
       this._errorTimer = null;
       // Preserve scroll position of the output panel across re-renders (if enabled)
       const container = this.content.node;
+      const detailsStates = this._saveDetailsState(container);
       const prevScrollTop = container.scrollTop;
       const prevScrollLeft = container.scrollLeft;
       const prevScrollableHeight = Math.max(
@@ -349,6 +350,11 @@ _dyno_display({'${STATUS_MIME_TYPE}': {'has_errors': bool(getattr(_res, 'errors'
       );
       this.clearHighlights();
       this._applyOutputsToVisibleModel(nextOutputs);
+      this._restoreDetailsState(container, detailsStates);
+      // Restore again once rendering has settled (before scroll restoration)
+      requestAnimationFrame(() => {
+        this._restoreDetailsState(container, detailsStates);
+      });
       // Note: highlighting is now handled via comm, not from outputs
       // Keep the fallback for backward compatibility
       this._performHighlightingBasedOnResults(nextOutputs);
@@ -381,6 +387,69 @@ _dyno_display({'${STATUS_MIME_TYPE}': {'has_errors': bool(getattr(_res, 'errors'
         }
       }, wait);
     }
+  }
+
+  /**
+   * Save open/collapsed state of all <details> elements in the container.
+   */
+  private _saveDetailsState(container: HTMLElement): Map<string, boolean> {
+    const detailsElements = container.querySelectorAll('details');
+    if (detailsElements.length > 0) {
+      const stateMap = new Map<string, boolean>();
+      const summaryCountMap = new Map<string, number>();
+
+      detailsElements.forEach((details, index) => {
+        const htmlDetails = details as HTMLDetailsElement;
+        const summary = htmlDetails.querySelector('summary');
+        const summaryText = summary?.textContent?.trim() || '';
+
+        const count = (summaryCountMap.get(summaryText) || 0) + 1;
+        summaryCountMap.set(summaryText, count);
+
+        const keyBySummary = `${summaryText}::${count}`;
+        const keyByIndex = `index::${index}`;
+
+        stateMap.set(keyBySummary, htmlDetails.open);
+        stateMap.set(keyByIndex, htmlDetails.open);
+      });
+
+      this._lastDetailsState = stateMap;
+      return stateMap;
+    }
+    return this._lastDetailsState;
+  }
+
+  /**
+   * Restore open/collapsed state of <details> elements in the container from saved state.
+   */
+  private _restoreDetailsState(
+    container: HTMLElement,
+    stateMap: Map<string, boolean>
+  ): void {
+    if (!stateMap || stateMap.size === 0) {
+      return;
+    }
+
+    const detailsElements = container.querySelectorAll('details');
+    const summaryCountMap = new Map<string, number>();
+
+    detailsElements.forEach((details, index) => {
+      const htmlDetails = details as HTMLDetailsElement;
+      const summary = htmlDetails.querySelector('summary');
+      const summaryText = summary?.textContent?.trim() || '';
+
+      const count = (summaryCountMap.get(summaryText) || 0) + 1;
+      summaryCountMap.set(summaryText, count);
+
+      const keyBySummary = `${summaryText}::${count}`;
+      const keyByIndex = `index::${index}`;
+
+      if (stateMap.has(keyBySummary)) {
+        htmlDetails.open = stateMap.get(keyBySummary)!;
+      } else if (stateMap.has(keyByIndex)) {
+        htmlDetails.open = stateMap.get(keyByIndex)!;
+      }
+    });
   }
 
   /**
@@ -1706,6 +1775,7 @@ _dyno_display({'${STATUS_MIME_TYPE}': {'has_errors': bool(getattr(_res, 'errors'
   private _refreshTimer: number | null = null;
   private _errorTimer: number | null = null;
   private _lastEditTime = 0;
+  private _lastDetailsState: Map<string, boolean> = new Map(); // Store open/closed state of report <details> sections
   private _editGeneration = 0;
   private _pendingHighlights: any[] = [];
   private _rendermime: IRenderMimeRegistry;

@@ -1,6 +1,6 @@
 context:
   name: jupyterlab-dyno
-  version: 0.0.0.dev0
+  version: 0.1.3
   account: EconForge
 
 package:

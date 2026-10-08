@@ -73,8 +73,66 @@ Here is a summary of the steps to cut a new release:
 > Check out the [workflow documentation](https://jupyter-releaser.readthedocs.io/en/latest/get_started/making_release_from_repo.html)
 > for more information.
 
+## Publishing to `prefix-dev` (EconForge channel)
+
+`jupyterlab-dyno` can be built as a conda package using `pixi build` or `rattler-build` (using `pixi.toml` or `recipe/recipe.yaml`) and published to the `econforge` channel on [prefix.dev](https://prefix.dev).
+
+### 1. Build the conda package
+
+Build the `.conda` package locally using `pixi` or `rattler-build`:
+
+```bash
+# Using pixi build
+pixi build
+
+# Or using rattler-build directly
+rattler-build build --recipe recipe/recipe.yaml
+```
+
+The built `.conda` package will be located in the output directory (e.g. `output/noarch/jupyterlab_dyno-*.conda` or `.pixi/bld/output/noarch/`).
+
+### 2. Upload to prefix.dev channel
+
+Set your API token for prefix.dev (obtained from your prefix.dev account settings):
+
+```bash
+export PREFIX_API_KEY="your-prefix-api-token"
+```
+
+Upload the package to the `econforge` channel on prefix.dev:
+
+```bash
+rattler-build upload prefix -c econforge output/noarch/jupyterlab_dyno-*.conda
+```
+
+---
+
 ## Publishing to `conda-forge`
 
-If the package is not on conda forge yet, check the documentation to learn how to add it: https://conda-forge.org/docs/maintainer/adding_pkgs.html
+`jupyterlab-dyno` is available on `conda-forge` via the [jupyterlab-dyno-feedstock](https://github.com/conda-forge/jupyterlab-dyno-feedstock) repository.
 
-Otherwise a bot should pick up the new version publish to PyPI, and open a new PR on the feedstock repository automatically.
+### Automated bot PRs (Standard Workflow)
+
+When a new version is published to PyPI:
+
+1. **Automatic PR Creation**: The `regro-cf-autotick-bot` automatically detects the PyPI release and opens a PR on [jupyterlab-dyno-feedstock](https://github.com/conda-forge/jupyterlab-dyno-feedstock).
+2. **Review & Merge**:
+   - Verify that the version number, SHA256 checksum, and dependencies in `recipe/meta.yaml` (or `recipe/recipe.yaml`) match the new release.
+   - Comment `@conda-forge-admin, please render` on the PR if re-rendering is required.
+   - Merge the PR once CI checks pass.
+3. **Automatic Deployment**: Merging the PR triggers conda-forge CI to automatically build and publish the updated package to the `conda-forge` channel.
+
+### Manual feedstock update
+
+If the bot PR is delayed or manual adjustments are needed:
+
+1. Fork and clone [jupyterlab-dyno-feedstock](https://github.com/conda-forge/jupyterlab-dyno-feedstock).
+2. Create a feature branch (e.g. `v0.1.x`).
+3. Update `version` and `sha256` (from PyPI source archive) in `recipe/meta.yaml` or `recipe/recipe.yaml`.
+4. Install `conda-smithy` and re-render:
+   ```bash
+   conda-smithy rerender
+   ```
+5. Commit, push, and open a PR on `conda-forge/jupyterlab-dyno-feedstock`.
+
+
