@@ -365,26 +365,26 @@ export const dynoHighlightStyle = HighlightStyle.define([
   {
     tag: t.heading1,
     fontWeight: '600',
-    color: 'var(--jp-dyno-header1-color, #2b6a8f)'
+    color: 'var(--jp-dyno-header1-color, #2b6a8f) !important'
   },
   {
     tag: t.heading2,
     fontWeight: '600',
-    color: 'var(--jp-dyno-header2-color, #3b7496)'
+    color: 'var(--jp-dyno-header2-color, #3b7496) !important'
   },
   {
     tag: t.heading3,
     fontWeight: '600',
-    color: 'var(--jp-dyno-header3-color, #4b7d9b)'
+    color: 'var(--jp-dyno-header3-color, #4b7d9b) !important'
   },
   {
     tag: t.heading,
     fontWeight: '600',
-    color: 'var(--jp-dyno-header-color, #3b7496)'
+    color: 'var(--jp-dyno-header-color, #3b7496) !important'
   },
   {
     tag: t.processingInstruction,
-    color: 'var(--jp-dyno-marker-color, #8c8c8c)',
+    color: 'var(--jp-dyno-marker-color, #8c8c8c) !important',
     opacity: '0.6'
   },
   {

@@ -255,31 +255,31 @@
 /* Markdown in ## lines */
 .cm-editor .cm-line .cm-comment-delimiter,
 .cm-editor .cm-line .cm-header-marker {
-  color: var(--jp-dyno-marker-color);
+  color: var(--jp-dyno-marker-color, #8c8c8c) !important;
   opacity: 0.65;
   font-weight: normal;
 }
 
 .cm-editor .cm-line .cm-header {
-  font-weight: 600;
-  color: var(--jp-dyno-header-color);
+  font-weight: 600 !important;
+  color: var(--jp-dyno-header-color, #3b7496) !important;
 }
 
 .cm-editor .cm-line .cm-header-1 {
-  font-weight: 600;
-  color: var(--jp-dyno-header1-color);
+  font-weight: 600 !important;
+  color: var(--jp-dyno-header1-color, #2b6a8f) !important;
   border-bottom: 1px solid rgba(43, 106, 143, 0.2);
   padding-bottom: 1px;
 }
 
 .cm-editor .cm-line .cm-header-2 {
-  font-weight: 600;
-  color: var(--jp-dyno-header2-color);
+  font-weight: 600 !important;
+  color: var(--jp-dyno-header2-color, #3b7496) !important;
 }
 
 .cm-editor .cm-line .cm-header-3 {
-  font-weight: 600;
-  color: var(--jp-dyno-header3-color);
+  font-weight: 600 !important;
+  color: var(--jp-dyno-header3-color, #4b7d9b) !important;
 }
 
 .cm-editor .cm-line .cm-strong {
