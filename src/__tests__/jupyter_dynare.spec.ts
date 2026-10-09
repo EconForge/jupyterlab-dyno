@@ -1,6 +1,6 @@
 import { Widget, DockPanel } from '@lumino/widgets';
 import { WidgetTracker } from '@jupyterlab/apputils';
-import { findTabBarForWidget, openAndPositionEditor, DynareWidget } from '../index';
+import { findTabBarForWidget, openAndPositionEditor, DynareWidget, dinoIcon } from '../index';
 
 describe('findTabBarForWidget', () => {
   it('should return null when dock or widget is null', () => {
@@ -217,6 +217,46 @@ describe('openAndPositionEditor', () => {
     });
 
     expect(viewer.setEditorWidget).toHaveBeenCalledWith(existingEditor);
+    dock.dispose();
+  });
+
+  it('should set editor.title.icon to dinoIcon for .dyno and .dyno.yaml files', async () => {
+    const mockEditorDyno = new Widget();
+    const mockEditorYaml = new Widget();
+
+    const mockCommands = {
+      execute: jest.fn(async (command: string, args: any) => {
+        if (args.path.endsWith('.dyno')) {
+          return mockEditorDyno;
+        }
+        return mockEditorYaml;
+      })
+    };
+
+    const mockShell = {
+      widgets: jest.fn(function* () {}),
+      add: jest.fn()
+    };
+
+    const mockApp = {
+      commands: mockCommands,
+      shell: mockShell
+    } as any;
+
+    const tracker = new WidgetTracker<DynareWidget>({ namespace: 'test' });
+    const dynoWidget = new MockDynoWidget('dyno-w', 'model.dyno') as any;
+    const dock = new DockPanel();
+    Widget.attach(dock, document.body);
+    dock.addWidget(dynoWidget);
+
+    await openAndPositionEditor(mockApp, tracker, dynoWidget);
+    expect(mockEditorDyno.title.icon).toBe(dinoIcon);
+
+    const yamlWidget = new MockDynoWidget('yaml-w', 'model.dyno.yaml') as any;
+    dock.addWidget(yamlWidget);
+    await openAndPositionEditor(mockApp, tracker, yamlWidget);
+    expect(mockEditorYaml.title.icon).toBe(dinoIcon);
+
     dock.dispose();
   });
 });

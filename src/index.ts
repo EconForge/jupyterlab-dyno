@@ -38,6 +38,7 @@ import { DynoOptionsPanel, IDynoFileOptions } from './sidebar';
 import { ToolbarButton } from '@jupyterlab/apputils';
 
 import { dyno, mod } from './languages/dyno-language';
+import { dinoIcon } from './icons';
 
 import { StateField, StateEffect, Compartment, EditorState } from '@codemirror/state';
 import { EditorView, Decoration } from '@codemirror/view';
@@ -128,6 +129,20 @@ export class DynareWidget
     
     // Show initial loading content in the output area
     this._showInitialLoading();
+
+    const updateIcon = () => {
+      const path = this.context.path || '';
+      if (
+        path.endsWith('.dyno') ||
+        path.endsWith('.dyno.yaml') ||
+        path.endsWith('.dyno.yml') ||
+        path.endsWith('.🦖')
+      ) {
+        this.title.icon = dinoIcon;
+      }
+    };
+    updateIcon();
+    this.context.pathChanged.connect(updateIcon);
   }
 
   /**
@@ -1991,6 +2006,15 @@ export async function openAndPositionEditor(
   }
 
   if (editor) {
+    const path = widget.context.path || '';
+    if (
+      path.endsWith('.dyno') ||
+      path.endsWith('.dyno.yaml') ||
+      path.endsWith('.dyno.yml') ||
+      path.endsWith('.🦖')
+    ) {
+      editor.title.icon = dinoIcon;
+    }
     widget.setEditorWidget(editor);
   }
 }
@@ -2273,19 +2297,23 @@ const plugin: JupyterFrontEndPlugin<IWidgetTracker<DynareWidget>> = {
       extensions: ['.dyno', '.🦖'],
       fileFormat: 'text',
       contentType: 'file',
-      mimeTypes: ['text/x-dyno', MIME_TYPE]
+      mimeTypes: ['text/x-dyno', MIME_TYPE],
+      icon: dinoIcon
     });
     app.docRegistry.addFileType({
       name: 'dynoYAML',
       displayName: 'Dyno YAML',
-      extensions: ['.dyno.yaml'],
-        fileFormat: 'text',
-        contentType: 'file',
-        mimeTypes: ['text/x-dyno', MIME_TYPE]
+      extensions: ['.dyno.yaml', '.dyno.yml'],
+      fileFormat: 'text',
+      contentType: 'file',
+      mimeTypes: ['text/x-dyno', MIME_TYPE],
+      icon: dinoIcon
     });
     
     return tracker;
   }    
 };
+
+export { dinoIcon, DINO_ICON_SVG } from './icons';
 
 export default plugin;
