@@ -138,7 +138,7 @@ export class DynareWidget
         path.endsWith('.dyno.yml') ||
         path.endsWith('.🦖')
       ) {
-        this.title.icon = dinoIcon;
+        this.title.icon = dinoIcon as any;
       }
     };
     updateIcon();
@@ -2013,7 +2013,7 @@ export async function openAndPositionEditor(
       path.endsWith('.dyno.yml') ||
       path.endsWith('.🦖')
     ) {
-      editor.title.icon = dinoIcon;
+      editor.title.icon = dinoIcon as any;
     }
     widget.setEditorWidget(editor);
   }
@@ -2298,7 +2298,7 @@ const plugin: JupyterFrontEndPlugin<IWidgetTracker<DynareWidget>> = {
       fileFormat: 'text',
       contentType: 'file',
       mimeTypes: ['text/x-dyno', MIME_TYPE],
-      icon: dinoIcon
+      icon: dinoIcon as any
     });
     app.docRegistry.addFileType({
       name: 'dynoYAML',
@@ -2307,7 +2307,7 @@ const plugin: JupyterFrontEndPlugin<IWidgetTracker<DynareWidget>> = {
       fileFormat: 'text',
       contentType: 'file',
       mimeTypes: ['text/x-dyno', MIME_TYPE],
-      icon: dinoIcon
+      icon: dinoIcon as any
     });
     
     return tracker;
