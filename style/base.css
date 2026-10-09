@@ -232,10 +232,10 @@
   --jp-dyno-strong-emphasis-color: #f08d49;
   --jp-dyno-monospace-color: #ce9178;
   --jp-dyno-link-color: #61afef;
-  --jp-dyno-header1-color: #4fc1ff;
-  --jp-dyno-header2-color: #4fc1ff;
-  --jp-dyno-header3-color: #4fc1ff;
-  --jp-dyno-header-color: #4fc1ff;
+  --jp-dyno-header1-color: #79a8d7;
+  --jp-dyno-header2-color: #6da0cf;
+  --jp-dyno-header3-color: #5c8bb8;
+  --jp-dyno-header-color: #6da0cf;
   --jp-dyno-marker-color: #7a7a7a;
 }
 
@@ -245,10 +245,10 @@
   --jp-dyno-strong-emphasis-color: #a02020;
   --jp-dyno-monospace-color: #a31515;
   --jp-dyno-link-color: #0366d6;
-  --jp-dyno-header1-color: #0969da;
-  --jp-dyno-header2-color: #0969da;
-  --jp-dyno-header3-color: #0969da;
-  --jp-dyno-header-color: #0969da;
+  --jp-dyno-header1-color: #2b6a8f;
+  --jp-dyno-header2-color: #3b7496;
+  --jp-dyno-header3-color: #4b7d9b;
+  --jp-dyno-header-color: #3b7496;
   --jp-dyno-marker-color: #8c8c8c;
 }
 
@@ -261,24 +261,24 @@
 }
 
 .cm-editor .cm-line .cm-header {
-  font-weight: bold;
+  font-weight: 600;
   color: var(--jp-dyno-header-color);
 }
 
 .cm-editor .cm-line .cm-header-1 {
-  font-weight: bold;
+  font-weight: 600;
   color: var(--jp-dyno-header1-color);
-  border-bottom: 1px solid rgba(9, 105, 218, 0.25);
+  border-bottom: 1px solid rgba(43, 106, 143, 0.2);
   padding-bottom: 1px;
 }
 
 .cm-editor .cm-line .cm-header-2 {
-  font-weight: bold;
+  font-weight: 600;
   color: var(--jp-dyno-header2-color);
 }
 
 .cm-editor .cm-line .cm-header-3 {
-  font-weight: bold;
+  font-weight: 600;
   color: var(--jp-dyno-header3-color);
 }
 

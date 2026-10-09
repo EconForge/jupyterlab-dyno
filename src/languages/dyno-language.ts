@@ -364,23 +364,23 @@ export const modMode = {
 export const dynoHighlightStyle = HighlightStyle.define([
   {
     tag: t.heading1,
-    fontWeight: 'bold',
-    color: 'var(--jp-dyno-header1-color, #0969da)'
+    fontWeight: '600',
+    color: 'var(--jp-dyno-header1-color, #2b6a8f)'
   },
   {
     tag: t.heading2,
-    fontWeight: 'bold',
-    color: 'var(--jp-dyno-header2-color, #0969da)'
+    fontWeight: '600',
+    color: 'var(--jp-dyno-header2-color, #3b7496)'
   },
   {
     tag: t.heading3,
-    fontWeight: 'bold',
-    color: 'var(--jp-dyno-header3-color, #0969da)'
+    fontWeight: '600',
+    color: 'var(--jp-dyno-header3-color, #4b7d9b)'
   },
   {
     tag: t.heading,
-    fontWeight: 'bold',
-    color: 'var(--jp-dyno-header-color, #0969da)'
+    fontWeight: '600',
+    color: 'var(--jp-dyno-header-color, #3b7496)'
   },
   {
     tag: t.processingInstruction,
