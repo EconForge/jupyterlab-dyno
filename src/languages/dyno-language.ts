@@ -9,23 +9,37 @@ import { tags as t } from '@lezer/highlight';
 export interface IDynoState {
   inComment: boolean;
   inMarkdown: boolean;
+  headerLevel: number;
 }
 
 // Mode definition for DYNO syntax highlighting
 export const dynoMode = {
   name: 'dyno',
-  startState: (): IDynoState => ({ inComment: false, inMarkdown: false }),
+  startState: (): IDynoState => ({
+    inComment: false,
+    inMarkdown: false,
+    headerLevel: 0
+  }),
   copyState: (state: IDynoState): IDynoState => ({ ...state }),
   blankLine: (state: IDynoState): void => {
     state.inMarkdown = false;
+    state.headerLevel = 0;
   },
   tokenTable: {
-    'time-subscript': t.atom
+    'time-subscript': t.atom,
+    header: t.heading,
+    'header-1': t.heading1,
+    'header-2': t.heading2,
+    'header-3': t.heading3,
+    'header-4': t.heading4,
+    'header-5': t.heading5,
+    'header-6': t.heading6
   },
   token: (stream: any, state: IDynoState) => {
     // Reset markdown state at start of line
     if (stream.sol()) {
       state.inMarkdown = false;
+      state.headerLevel = 0;
       // Match markdown header lines starting with ## (e.g. ##, ###)
       if (stream.match(/^\s*#{2,6}(\s+|$)/)) {
         state.inMarkdown = true;
@@ -36,7 +50,16 @@ export const dynoMode = {
     // Markdown content tokenization on ## lines
     if (state.inMarkdown) {
       if (stream.eatSpace()) {
-        return 'comment';
+        return state.headerLevel > 0
+          ? `header header-${state.headerLevel}`
+          : 'comment';
+      }
+
+      // Check for markdown heading prefix like "# ", "## ", "### " inside ## line
+      if (state.headerLevel === 0 && stream.match(/^#{1,6}(\s+|$)/)) {
+        const hashMatch = stream.current().trim();
+        state.headerLevel = Math.min(hashMatch.length, 6);
+        return `header header-${state.headerLevel}`;
       }
 
       // Escaped characters
@@ -46,16 +69,22 @@ export const dynoMode = {
 
       // Bold + Italic: ***text*** or ___text___ or **_text_** or _**text**_
       if (stream.match(/^\*\*\*(?!\s)[^*\r\n]+(?<!\s)\*\*\*/)) {
-        return 'strong emphasis';
+        return state.headerLevel > 0
+          ? `header header-${state.headerLevel} strong emphasis`
+          : 'strong emphasis';
       }
       if (stream.match(/^\*\*_(?!\s)[^_\r\n]+(?<!\s)_\*\*/)) {
-        return 'strong emphasis';
+        return state.headerLevel > 0
+          ? `header header-${state.headerLevel} strong emphasis`
+          : 'strong emphasis';
       }
       if (
         stream.match(/^_\*\*(?!\s)[^*\r\n]+(?<!\s)\*\*_/) &&
         (stream.pos <= 3 || !/\w/.test(stream.string[stream.pos - 4]))
       ) {
-        return 'strong emphasis';
+        return state.headerLevel > 0
+          ? `header header-${state.headerLevel} strong emphasis`
+          : 'strong emphasis';
       }
 
       const prevChar = stream.pos > 0 ? stream.string[stream.pos - 1] : ' ';
@@ -65,33 +94,47 @@ export const dynoMode = {
         canUnderscore &&
         stream.match(/^___(?!\s)[^_\r\n]+(?<!\s)___(?!\w)/)
       ) {
-        return 'strong emphasis';
+        return state.headerLevel > 0
+          ? `header header-${state.headerLevel} strong emphasis`
+          : 'strong emphasis';
       }
 
       // Bold: **text** or __text__
       if (stream.match(/^\*\*(?!\s)[^*\r\n]+(?<!\s)\*\*/)) {
-        return 'strong';
+        return state.headerLevel > 0
+          ? `header header-${state.headerLevel} strong`
+          : 'strong';
       }
       if (canUnderscore && stream.match(/^__(?!\s)[^_\r\n]+(?<!\s)__(?!\w)/)) {
-        return 'strong';
+        return state.headerLevel > 0
+          ? `header header-${state.headerLevel} strong`
+          : 'strong';
       }
 
       // Italic: *text* or _text_
       if (stream.match(/^\*(?!\s)[^*\r\n]+(?<!\s)\*/)) {
-        return 'emphasis';
+        return state.headerLevel > 0
+          ? `header header-${state.headerLevel} emphasis`
+          : 'emphasis';
       }
       if (canUnderscore && stream.match(/^_(?!\s)[^_\r\n]+(?<!\s)_(?!\w)/)) {
-        return 'emphasis';
+        return state.headerLevel > 0
+          ? `header header-${state.headerLevel} emphasis`
+          : 'emphasis';
       }
 
       // Inline code: `code`
       if (stream.match(/^`[^`\r\n]+`/)) {
-        return 'monospace';
+        return state.headerLevel > 0
+          ? `header header-${state.headerLevel} monospace`
+          : 'monospace';
       }
 
       // Strikethrough: ~~text~~
       if (stream.match(/^~~(?!\s)[^~\r\n]+(?<!\s)~~/)) {
-        return 'strikethrough';
+        return state.headerLevel > 0
+          ? `header header-${state.headerLevel} strikethrough`
+          : 'strikethrough';
       }
 
       // Math: $$...$$ or $...$
@@ -104,16 +147,22 @@ export const dynoMode = {
 
       // Links: [text](url)
       if (stream.match(/^\[[^\]\r\n]+\]\([^)\r\n]+\)/)) {
-        return 'link';
+        return state.headerLevel > 0
+          ? `header header-${state.headerLevel} link`
+          : 'link';
       }
 
       // Plain text up to next potential delimiter or space
       if (stream.match(/^[^*_`~$[\\] \t]+/)) {
-        return 'comment';
+        return state.headerLevel > 0
+          ? `header header-${state.headerLevel}`
+          : 'comment';
       }
 
       stream.next();
-      return 'comment';
+      return state.headerLevel > 0
+        ? `header header-${state.headerLevel}`
+        : 'comment';
     }
 
     // Comments starting with #
@@ -309,8 +358,31 @@ export const modMode = {
   }
 };
 
-// Highlight style for Dyno markdown formatting (emphasis, bold, code)
+// Highlight style for Dyno markdown formatting (emphasis, bold, code, headings)
 export const dynoHighlightStyle = HighlightStyle.define([
+  {
+    tag: t.heading1,
+    fontSize: '1.25em',
+    fontWeight: 'bold',
+    color: 'var(--jp-dyno-header1-color, #025955)'
+  },
+  {
+    tag: t.heading2,
+    fontSize: '1.15em',
+    fontWeight: 'bold',
+    color: 'var(--jp-dyno-header2-color, #007a87)'
+  },
+  {
+    tag: t.heading3,
+    fontSize: '1.05em',
+    fontWeight: 'bold',
+    color: 'var(--jp-dyno-header3-color, #007a87)'
+  },
+  {
+    tag: t.heading,
+    fontWeight: 'bold',
+    color: 'var(--jp-dyno-header-color, #007a87)'
+  },
   {
     tag: t.strong,
     color: 'var(--jp-dyno-strong-color, #b55000)',

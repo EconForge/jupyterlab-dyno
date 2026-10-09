@@ -123,6 +123,32 @@ describe('dynoMode syntax highlighting', () => {
       expect(emphasisTokens.length).toBe(0);
     });
 
+    it('should format markdown headers like ## # This is a title.', () => {
+      const doc = '## # This is a title.';
+      const tokens = getTokens(doc);
+
+      const prefixToken = tokens.find(t => t.text.startsWith('##'));
+      expect(prefixToken).toBeDefined();
+      expect(prefixToken?.name).toBe('comment');
+
+      const headerTokens = tokens.filter(t => t.name.startsWith('header'));
+      expect(headerTokens.length).toBeGreaterThan(0);
+      const combinedHeaderText = headerTokens.map(t => t.text).join('');
+      expect(combinedHeaderText).toContain('This is a title.');
+    });
+
+    it('should format markdown headers with formatting inside like ## ## Title with *italic*', () => {
+      const doc = '## ## Title with *italic*';
+      const tokens = getTokens(doc);
+
+      const headerTokens = tokens.filter(t => t.name.startsWith('header'));
+      expect(headerTokens.length).toBeGreaterThan(0);
+
+      const italicToken = tokens.find(t => t.text === '*italic*');
+      expect(italicToken).toBeDefined();
+      expect(italicToken?.name).toContain('emphasis');
+    });
+
     it('should only apply markdown highlighting to ## lines and reset on subsequent lines', () => {
       const doc = [
         '## Heading with **bold**',

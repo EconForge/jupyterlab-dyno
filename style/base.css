@@ -232,6 +232,10 @@
   --jp-dyno-strong-emphasis-color: #f08d49;
   --jp-dyno-monospace-color: #ce9178;
   --jp-dyno-link-color: #61afef;
+  --jp-dyno-header1-color: #61afef;
+  --jp-dyno-header2-color: #4ec9b0;
+  --jp-dyno-header3-color: #4ec9b0;
+  --jp-dyno-header-color: #4ec9b0;
 }
 
 [data-jp-theme-light] {
@@ -240,9 +244,36 @@
   --jp-dyno-strong-emphasis-color: #a02020;
   --jp-dyno-monospace-color: #a31515;
   --jp-dyno-link-color: #0366d6;
+  --jp-dyno-header1-color: #025955;
+  --jp-dyno-header2-color: #007a87;
+  --jp-dyno-header3-color: #007a87;
+  --jp-dyno-header-color: #007a87;
 }
 
 /* Markdown in ## lines */
+.cm-editor .cm-line .cm-header {
+  font-weight: bold;
+  color: var(--jp-dyno-header-color);
+}
+
+.cm-editor .cm-line .cm-header-1 {
+  font-size: 1.25em;
+  font-weight: bold;
+  color: var(--jp-dyno-header1-color);
+}
+
+.cm-editor .cm-line .cm-header-2 {
+  font-size: 1.15em;
+  font-weight: bold;
+  color: var(--jp-dyno-header2-color);
+}
+
+.cm-editor .cm-line .cm-header-3 {
+  font-size: 1.05em;
+  font-weight: bold;
+  color: var(--jp-dyno-header3-color);
+}
+
 .cm-editor .cm-line .cm-strong {
   color: var(--jp-dyno-strong-color);
   font-weight: bold;
