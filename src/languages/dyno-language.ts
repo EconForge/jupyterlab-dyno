@@ -33,7 +33,9 @@ export const dynoMode = {
     'header-3': t.heading3,
     'header-4': t.heading4,
     'header-5': t.heading5,
-    'header-6': t.heading6
+    'header-6': t.heading6,
+    'comment-delimiter': t.processingInstruction,
+    'header-marker': t.processingInstruction
   },
   token: (stream: any, state: IDynoState) => {
     // Reset markdown state at start of line
@@ -59,7 +61,7 @@ export const dynoMode = {
       if (state.headerLevel === 0 && stream.match(/^#{1,6}(\s+|$)/)) {
         const hashMatch = stream.current().trim();
         state.headerLevel = Math.min(hashMatch.length, 6);
-        return `header header-${state.headerLevel}`;
+        return 'header-marker';
       }
 
       // Escaped characters
@@ -362,26 +364,28 @@ export const modMode = {
 export const dynoHighlightStyle = HighlightStyle.define([
   {
     tag: t.heading1,
-    fontSize: '1.25em',
     fontWeight: 'bold',
-    color: 'var(--jp-dyno-header1-color, #025955)'
+    color: 'var(--jp-dyno-header1-color, #0969da)'
   },
   {
     tag: t.heading2,
-    fontSize: '1.15em',
     fontWeight: 'bold',
-    color: 'var(--jp-dyno-header2-color, #007a87)'
+    color: 'var(--jp-dyno-header2-color, #0969da)'
   },
   {
     tag: t.heading3,
-    fontSize: '1.05em',
     fontWeight: 'bold',
-    color: 'var(--jp-dyno-header3-color, #007a87)'
+    color: 'var(--jp-dyno-header3-color, #0969da)'
   },
   {
     tag: t.heading,
     fontWeight: 'bold',
-    color: 'var(--jp-dyno-header-color, #007a87)'
+    color: 'var(--jp-dyno-header-color, #0969da)'
+  },
+  {
+    tag: t.processingInstruction,
+    color: 'var(--jp-dyno-marker-color, #8c8c8c)',
+    opacity: '0.6'
   },
   {
     tag: t.strong,
